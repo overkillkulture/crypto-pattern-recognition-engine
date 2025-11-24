@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Documentation
+*.md
+docs/
+ARCHITECTURE.md
+PROGRESS.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs and data
+logs/
+*.log
+data/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Environment
+.env
+.env.local

@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pattern-recognition-db
+    environment:
+      POSTGRES_DB: pattern_recognition
+      POSTGRES_USER: pattern_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pattern_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pattern-network
+
+  # Redis Cache (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: pattern-recognition-cache
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pattern-network
+
+  # Pattern Recognition Engine
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pattern-recognition-engine
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://pattern_user:${DB_PASSWORD:-changeme}@postgres:5432/pattern_recognition
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+
+      # API Keys (set in .env file)
+      EXCHANGE_API_KEY: ${EXCHANGE_API_KEY:-}
+      EXCHANGE_API_SECRET: ${EXCHANGE_API_SECRET:-}
+
+      # Alert channels
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+
+      # Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENABLE_CACHE: ${ENABLE_CACHE:-true}
+
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+    networks:
+      - pattern-network
+    restart: unless-stopped
+    command: ["python", "examples/multi_pattern_analysis.py"]
+
+  # Backtesting Service
+  backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pattern-recognition-backtest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pattern_user:${DB_PASSWORD:-changeme}@postgres:5432/pattern_recognition
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+    networks:
+      - pattern-network
+    profiles:
+      - backtest
+    command: ["python", "examples/backtest_example.py"]
+
+  # Database Admin UI (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pattern-recognition-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - pattern-network
+    profiles:
+      - admin
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  pattern-network:
+    driver: bridge

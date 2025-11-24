@@ -19,6 +19,15 @@ from src.patterns.chart import (
     FlagPattern,
     WedgePattern,
 )
+from src.patterns.combinations import (
+    CombinedSignal,
+    PatternCombinationStrategy,
+    ConsensusStrategy,
+    WeightedStrategy,
+    ConfirmationStrategy,
+    TimeframeConfluenceStrategy,
+    PatternCombiner,
+)
 
 __all__ = [
     "TechnicalPatternDetector",
@@ -36,4 +45,12 @@ __all__ = [
     "DoubleTopBottomPattern",
     "FlagPattern",
     "WedgePattern",
+    # Combinations
+    "CombinedSignal",
+    "PatternCombinationStrategy",
+    "ConsensusStrategy",
+    "WeightedStrategy",
+    "ConfirmationStrategy",
+    "TimeframeConfluenceStrategy",
+    "PatternCombiner",
 ]
