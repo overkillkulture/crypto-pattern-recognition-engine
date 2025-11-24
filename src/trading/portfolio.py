@@ -5,6 +5,8 @@ from typing import Dict, List
 from datetime import datetime
 import logging
 
+from src.trading.simulator import OrderSide
+
 logger = logging.getLogger(__name__)
 
 
@@ -197,7 +199,7 @@ class Portfolio:
                 # Buy
                 self.simulator.market_order(
                     symbol,
-                    self.simulator.OrderSide.BUY,
+                    OrderSide.BUY,
                     abs(quantity_diff),
                     current_prices[symbol]
                 )
@@ -205,7 +207,7 @@ class Portfolio:
                 # Sell
                 self.simulator.market_order(
                     symbol,
-                    self.simulator.OrderSide.SELL,
+                    OrderSide.SELL,
                     abs(quantity_diff),
                     current_prices[symbol]
                 )
