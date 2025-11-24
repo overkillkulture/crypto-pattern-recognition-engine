@@ -18,6 +18,9 @@ from src.patterns.chart import (
     DoubleTopBottomPattern,
     FlagPattern,
     WedgePattern,
+    CupAndHandlePattern,
+    RectanglePattern,
+    DiamondPattern,
 )
 from src.patterns.combinations import (
     CombinedSignal,
@@ -45,6 +48,9 @@ __all__ = [
     "DoubleTopBottomPattern",
     "FlagPattern",
     "WedgePattern",
+    "CupAndHandlePattern",
+    "RectanglePattern",
+    "DiamondPattern",
     # Combinations
     "CombinedSignal",
     "PatternCombinationStrategy",

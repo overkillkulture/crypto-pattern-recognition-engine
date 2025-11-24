@@ -18,6 +18,11 @@ from src.utils.performance import (
     MemoryPool,
     global_monitor,
 )
+from src.utils.risk import (
+    RiskManager,
+    PositionSize,
+    RiskMetrics,
+)
 
 __all__ = [
     "load_config",
@@ -39,4 +44,8 @@ __all__ = [
     "retry_async",
     "MemoryPool",
     "global_monitor",
+    # Risk Management
+    "RiskManager",
+    "PositionSize",
+    "RiskMetrics",
 ]

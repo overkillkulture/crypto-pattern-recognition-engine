@@ -453,3 +453,394 @@ class WedgePattern(ChartPattern):
     def validate(self, result: PatternResult) -> bool:
         """Validate Wedge result."""
         return result.pattern_type == PatternType.CHART_PATTERN
+
+
+class CupAndHandlePattern(ChartPattern):
+    """
+    Cup and Handle pattern detection.
+
+    A bullish continuation pattern where price forms a rounded bottom (cup)
+    followed by a consolidation (handle) before breaking out.
+    """
+
+    def __init__(self, min_length: int = 40):
+        super().__init__()
+        self.name = "Cup and Handle"
+        self.description = "Cup and Handle bullish continuation"
+        self.min_length = min_length
+
+    def detect(self, data: OHLCV) -> List[PatternResult]:
+        """Detect cup and handle patterns."""
+        results = []
+
+        if len(data.close) < self.min_length:
+            return results
+
+        closes = data.close
+        highs = data.high
+        lows = data.low
+
+        # Look for cup and handle in recent data
+        window = min(100, len(closes))
+        recent_closes = closes[-window:]
+        recent_highs = highs[-window:]
+        recent_lows = lows[-window:]
+
+        # Find potential cup: U-shaped pattern
+        # Need left rim, bottom, right rim
+        peaks = argrelextrema(recent_closes, np.greater, order=5)[0]
+        valleys = argrelextrema(recent_closes, np.less, order=5)[0]
+
+        if len(peaks) < 2 or len(valleys) < 1:
+            return results
+
+        # Check for cup pattern in last 60-80% of window
+        cup_start_idx = int(window * 0.2)
+        cup_peaks = peaks[peaks >= cup_start_idx]
+        cup_valleys = valleys[valleys >= cup_start_idx]
+
+        if len(cup_peaks) < 2 or len(cup_valleys) < 1:
+            return results
+
+        # Find a valley between two peaks of similar height
+        for i in range(len(cup_peaks) - 1):
+            left_peak_idx = cup_peaks[i]
+            right_peak_idx = cup_peaks[i + 1]
+
+            # Find valleys between these peaks
+            between_valleys = cup_valleys[(cup_valleys > left_peak_idx) & (cup_valleys < right_peak_idx)]
+
+            if len(between_valleys) == 0:
+                continue
+
+            # Check if peaks are at similar levels (cup rims)
+            left_peak = recent_closes[left_peak_idx]
+            right_peak = recent_closes[right_peak_idx]
+            peak_diff = abs(left_peak - right_peak) / left_peak
+
+            if peak_diff > 0.05:  # Peaks should be within 5%
+                continue
+
+            # Check for rounded bottom (multiple valleys)
+            valley_idx = between_valleys[len(between_valleys) // 2]
+            valley_price = recent_closes[valley_idx]
+
+            # Cup depth should be 12-33% of price
+            cup_depth = (left_peak - valley_price) / left_peak
+            if cup_depth < 0.12 or cup_depth > 0.33:
+                continue
+
+            # Look for handle: small consolidation after right rim
+            handle_start = right_peak_idx
+            handle_end = len(recent_closes) - 1
+            handle_length = handle_end - handle_start
+
+            if handle_length < 5 or handle_length > 20:
+                continue
+
+            handle_prices = recent_closes[handle_start:handle_end + 1]
+            handle_high = np.max(handle_prices)
+            handle_low = np.min(handle_prices)
+            handle_depth = (handle_high - handle_low) / handle_high
+
+            # Handle should be shallow (< 12% of cup depth)
+            if handle_depth > cup_depth * 0.5:
+                continue
+
+            # Check if currently breaking out
+            current_price = closes[-1]
+            breakout_level = right_peak
+
+            confidence = 0.70
+            signal = SignalType.HOLD
+
+            # Breaking out above handle
+            if current_price >= breakout_level * 1.01:
+                signal = SignalType.BUY
+                confidence = 0.85
+            # In handle, waiting for breakout
+            elif current_price >= breakout_level * 0.98:
+                signal = SignalType.HOLD
+                confidence = 0.75
+
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Cup and Handle",
+                pattern_type=PatternType.CHART_PATTERN,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=confidence,
+                signal=signal,
+                entry_price=breakout_level * 1.01,
+                target_price=breakout_level + (breakout_level - valley_price),
+                stop_loss=handle_low * 0.98,
+                metadata={
+                    'cup_depth': float(cup_depth),
+                    'handle_depth': float(handle_depth),
+                    'breakout_level': float(breakout_level),
+                    'cup_left_rim': float(left_peak),
+                    'cup_right_rim': float(right_peak),
+                    'cup_bottom': float(valley_price),
+                },
+                description=f"Cup and Handle pattern - breakout at ${breakout_level:.2f}",
+            ))
+
+        return results
+
+    def validate(self, result: PatternResult) -> bool:
+        """Validate Cup and Handle result."""
+        return result.pattern_type == PatternType.CHART_PATTERN
+
+
+class RectanglePattern(ChartPattern):
+    """
+    Rectangle pattern detection (consolidation range).
+
+    A continuation pattern where price consolidates between support and resistance
+    before breaking out in the direction of the prior trend.
+    """
+
+    def __init__(self, min_length: int = 20, max_width_pct: float = 0.05):
+        super().__init__()
+        self.name = "Rectangle"
+        self.description = "Rectangle consolidation pattern"
+        self.min_length = min_length
+        self.max_width_pct = max_width_pct
+
+    def detect(self, data: OHLCV) -> List[PatternResult]:
+        """Detect rectangle patterns."""
+        results = []
+
+        if len(data.close) < self.min_length:
+            return results
+
+        closes = data.close
+        highs = data.high
+        lows = data.low
+
+        # Look for rectangle in recent data
+        for lookback in [30, 40, 50]:
+            if len(closes) < lookback:
+                continue
+
+            recent_closes = closes[-lookback:]
+            recent_highs = highs[-lookback:]
+            recent_lows = lows[-lookback:]
+
+            # Find resistance and support levels
+            resistance = np.max(recent_highs[-20:])
+            support = np.min(recent_lows[-20:])
+            range_width = (resistance - support) / support
+
+            # Rectangle should have defined but tight range
+            if range_width > self.max_width_pct * 3:  # Up to 15% range
+                continue
+
+            # Count touches of support and resistance
+            resistance_touches = np.sum(recent_highs >= resistance * 0.99)
+            support_touches = np.sum(recent_lows <= support * 1.01)
+
+            # Need at least 2 touches of each level
+            if resistance_touches < 2 or support_touches < 2:
+                continue
+
+            # Current price position
+            current_price = closes[-1]
+            price_position = (current_price - support) / (resistance - support)
+
+            # Determine trend before rectangle (for continuation direction)
+            pre_rect_closes = closes[-lookback - 20:-lookback] if len(closes) >= lookback + 20 else closes[:lookback//2]
+            trend_direction = "up" if pre_rect_closes[-1] > pre_rect_closes[0] else "down"
+
+            confidence = 0.70
+            signal = SignalType.HOLD
+
+            # Breaking above resistance (bullish breakout)
+            if current_price >= resistance * 1.005:
+                signal = SignalType.BUY
+                confidence = 0.85 if trend_direction == "up" else 0.75
+            # Breaking below support (bearish breakout)
+            elif current_price <= support * 0.995:
+                signal = SignalType.SELL
+                confidence = 0.85 if trend_direction == "down" else 0.75
+            # Near resistance
+            elif price_position > 0.85:
+                signal = SignalType.HOLD
+                confidence = 0.75
+            # Near support
+            elif price_position < 0.15:
+                signal = SignalType.HOLD
+                confidence = 0.75
+
+            # Calculate target based on range height
+            range_height = resistance - support
+            target_price = resistance + range_height if signal == SignalType.BUY else support - range_height
+            stop_loss = support * 0.98 if signal == SignalType.BUY else resistance * 1.02
+
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Rectangle Consolidation",
+                pattern_type=PatternType.CHART_PATTERN,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=confidence,
+                signal=signal,
+                entry_price=resistance * 1.005 if trend_direction == "up" else support * 0.995,
+                target_price=target_price,
+                stop_loss=stop_loss,
+                metadata={
+                    'resistance': float(resistance),
+                    'support': float(support),
+                    'range_width_pct': float(range_width * 100),
+                    'resistance_touches': int(resistance_touches),
+                    'support_touches': int(support_touches),
+                    'prior_trend': trend_direction,
+                    'price_position_pct': float(price_position * 100),
+                },
+                description=f"Rectangle pattern: ${support:.2f} - ${resistance:.2f} range",
+            ))
+
+            break  # Only report one rectangle
+
+        return results
+
+    def validate(self, result: PatternResult) -> bool:
+        """Validate Rectangle result."""
+        return result.pattern_type == PatternType.CHART_PATTERN
+
+
+class DiamondPattern(ChartPattern):
+    """
+    Diamond pattern detection.
+
+    A reversal pattern that forms when price expands and then contracts,
+    creating a diamond shape. Often appears at market tops.
+    """
+
+    def __init__(self, min_length: int = 30):
+        super().__init__()
+        self.name = "Diamond"
+        self.description = "Diamond reversal pattern"
+        self.min_length = min_length
+
+    def detect(self, data: OHLCV) -> List[PatternResult]:
+        """Detect diamond patterns."""
+        results = []
+
+        if len(data.close) < self.min_length:
+            return results
+
+        closes = data.close
+        highs = data.high
+        lows = data.low
+
+        # Look for diamond in recent data
+        window = min(80, len(closes))
+        recent_closes = closes[-window:]
+        recent_highs = highs[-window:]
+        recent_lows = lows[-window:]
+
+        # Find peaks and valleys
+        peaks = argrelextrema(recent_closes, np.greater, order=3)[0]
+        valleys = argrelextrema(recent_closes, np.less, order=3)[0]
+
+        if len(peaks) < 4 or len(valleys) < 4:
+            return results
+
+        # Look for diamond in last 50% of window
+        diamond_start = int(window * 0.5)
+        recent_peaks = peaks[peaks >= diamond_start]
+        recent_valleys = valleys[valleys >= diamond_start]
+
+        if len(recent_peaks) < 3 or len(recent_valleys) < 3:
+            return results
+
+        # Check for expanding then contracting pattern
+        # First half: expanding (widening peaks and valleys)
+        # Second half: contracting (narrowing peaks and valleys)
+
+        for i in range(len(recent_peaks) - 2):
+            p1, p2, p3 = recent_peaks[i:i+3]
+
+            # Find corresponding valleys
+            v_between_12 = recent_valleys[(recent_valleys > p1) & (recent_valleys < p2)]
+            v_between_23 = recent_valleys[(recent_valleys > p2) & (recent_valleys < p3)]
+
+            if len(v_between_12) == 0 or len(v_between_23) == 0:
+                continue
+
+            v1 = v_between_12[0]
+            v2 = v_between_23[0]
+
+            # Check if pattern forms diamond shape
+            # Peak 2 should be highest, valleys should show expansion then contraction
+            peak1_price = recent_closes[p1]
+            peak2_price = recent_closes[p2]
+            peak3_price = recent_closes[p3]
+            valley1_price = recent_closes[v1]
+            valley2_price = recent_closes[v2]
+
+            # Peak 2 should be highest (top of diamond)
+            if peak2_price <= peak1_price or peak2_price <= peak3_price:
+                continue
+
+            # Check for expansion and contraction
+            range1 = peak1_price - valley1_price
+            range2 = peak2_price - valley2_price
+
+            if range2 <= range1:  # Should expand
+                continue
+
+            # Diamond completion (contracting)
+            if peak3_price < peak2_price and p3 < len(recent_closes) - 5:
+                current_price = closes[-1]
+
+                # Determine trend before diamond
+                pre_diamond_trend = "up" if closes[-window] < peak2_price else "down"
+
+                confidence = 0.75
+                signal = SignalType.HOLD
+
+                # Breaking down from diamond (bearish)
+                if current_price < valley2_price * 0.99:
+                    signal = SignalType.SELL
+                    confidence = 0.82
+                # Breaking up from diamond (bullish, less common)
+                elif current_price > peak2_price * 1.01:
+                    signal = SignalType.BUY
+                    confidence = 0.70
+
+                diamond_height = peak2_price - min(valley1_price, valley2_price)
+                target_price = valley2_price - diamond_height if signal == SignalType.SELL else peak2_price + diamond_height
+
+                results.append(PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Diamond Pattern",
+                    pattern_type=PatternType.CHART_PATTERN,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    confidence=confidence,
+                    signal=signal,
+                    entry_price=valley2_price * 0.99 if signal == SignalType.SELL else peak2_price * 1.01,
+                    target_price=target_price,
+                    stop_loss=peak2_price * 1.02 if signal == SignalType.SELL else valley2_price * 0.98,
+                    metadata={
+                        'peak1': float(peak1_price),
+                        'peak2': float(peak2_price),
+                        'peak3': float(peak3_price),
+                        'valley1': float(valley1_price),
+                        'valley2': float(valley2_price),
+                        'diamond_height': float(diamond_height),
+                        'prior_trend': pre_diamond_trend,
+                    },
+                    description=f"Diamond reversal pattern - typical bearish reversal",
+                ))
+
+        return results
+
+    def validate(self, result: PatternResult) -> bool:
+        """Validate Diamond result."""
+        return result.pattern_type == PatternType.CHART_PATTERN
