@@ -1,0 +1,182 @@
+# Crypto Pattern Recognition Engine Configuration
+
+# Exchanges
+exchanges:
+  binance:
+    enabled: true
+    api_key: ${BINANCE_API_KEY}
+    api_secret: ${BINANCE_API_SECRET}
+    rate_limit: 1200
+
+  coinbase:
+    enabled: true
+    api_key: ${COINBASE_API_KEY}
+    api_secret: ${COINBASE_API_SECRET}
+    rate_limit: 600
+
+  kraken:
+    enabled: false
+    api_key: ${KRAKEN_API_KEY}
+    api_secret: ${KRAKEN_API_SECRET}
+    rate_limit: 900
+
+# Trading Pairs
+pairs:
+  - BTC/USDT
+  - ETH/USDT
+  - BNB/USDT
+  - SOL/USDT
+  - XRP/USDT
+
+# Timeframes
+timeframes:
+  - 1m
+  - 5m
+  - 15m
+  - 1h
+  - 4h
+  - 1d
+
+# Pattern Detection
+patterns:
+  technical_indicators:
+    enabled: true
+    indicators:
+      - rsi
+      - macd
+      - bollinger_bands
+      - ema
+      - sma
+      - vwap
+      - obv
+
+  chart_patterns:
+    enabled: true
+    patterns:
+      - head_and_shoulders
+      - double_top
+      - double_bottom
+      - triangles
+      - flags
+      - wedges
+
+  candlestick_patterns:
+    enabled: true
+    min_confidence: 0.7
+
+  order_flow:
+    enabled: true
+    volume_threshold: 1000000
+
+# Machine Learning
+ml:
+  enabled: true
+  model_path: models/
+  training:
+    batch_size: 32
+    epochs: 100
+    validation_split: 0.2
+
+  models:
+    lstm_predictor:
+      enabled: true
+      sequence_length: 60
+
+    anomaly_detector:
+      enabled: true
+      contamination: 0.1
+
+    pattern_classifier:
+      enabled: true
+      n_classes: 50
+
+# Real-time Analysis
+realtime:
+  enabled: true
+  update_interval: 1  # seconds
+  websocket: true
+
+# Alerts
+alerts:
+  enabled: true
+  channels:
+    console:
+      enabled: true
+
+    file:
+      enabled: true
+      path: logs/alerts.log
+
+    webhook:
+      enabled: false
+      url: ${WEBHOOK_URL}
+
+    telegram:
+      enabled: false
+      bot_token: ${TELEGRAM_BOT_TOKEN}
+      chat_id: ${TELEGRAM_CHAT_ID}
+
+  filters:
+    min_confidence: 0.75
+    min_priority: medium
+
+# Database
+database:
+  type: sqlite  # sqlite, postgres, mongodb
+  connection:
+    sqlite:
+      path: data/patterns.db
+
+    postgres:
+      host: localhost
+      port: 5432
+      database: crypto_patterns
+      user: ${DB_USER}
+      password: ${DB_PASSWORD}
+
+# API
+api:
+  enabled: true
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+  cors:
+    enabled: true
+    origins:
+      - "*"
+
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+
+# Logging
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  format: "json"  # json, text
+  output:
+    - console
+    - file
+
+  file:
+    path: logs/engine.log
+    rotation: 100 MB
+    retention: 30 days
+
+# Performance
+performance:
+  max_workers: 8
+  cache_enabled: true
+  cache_ttl: 300  # seconds
+
+  data_buffer:
+    max_size: 10000
+    flush_interval: 60
+
+# Features (for progressive rollout)
+features:
+  advanced_ml: true
+  harmonic_patterns: true
+  order_book_analysis: true
+  multi_timeframe_confluence: true
+  backtesting: true
