@@ -10,6 +10,8 @@ from src.patterns.technical import (
     MovingAverageCrossPattern,
     ATRPattern,
     OBVPattern,
+    ADXPattern,
+    ParabolicSARPattern,
 )
 from src.patterns.candlestick import CandlestickPatternDetector
 from src.patterns.chart import (
@@ -42,6 +44,8 @@ __all__ = [
     "MovingAverageCrossPattern",
     "ATRPattern",
     "OBVPattern",
+    "ADXPattern",
+    "ParabolicSARPattern",
     "CandlestickPatternDetector",
     "HeadAndShouldersPattern",
     "TrianglePattern",

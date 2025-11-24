@@ -655,3 +655,312 @@ class OBVPattern(Pattern):
     def validate(self, result: PatternResult) -> bool:
         """Validate OBV result."""
         return result.pattern_type == PatternType.TECHNICAL_INDICATOR
+
+
+class ADXPattern(Pattern):
+    """
+    Average Directional Index (ADX) pattern detection.
+
+    ADX measures trend strength (not direction).
+    Values above 25 indicate strong trend, below 20 weak/no trend.
+    """
+
+    def __init__(self, period: int = 14, strong_trend_threshold: float = 25.0):
+        super().__init__()
+        self.name = "ADX"
+        self.period = period
+        self.strong_trend_threshold = strong_trend_threshold
+        self.description = f"ADX trend strength (period={period})"
+
+    def detect(self, data: OHLCV) -> List[PatternResult]:
+        """Detect ADX patterns."""
+        results = []
+
+        if len(data.close) < self.period + 20:
+            return results
+
+        # Calculate ADX
+        adx = self._calculate_adx(data.high, data.low, data.close, self.period)
+
+        if len(adx) < 2:
+            return results
+
+        current_adx = adx[-1]
+        prev_adx = adx[-2]
+
+        # Strong trend emerging
+        if current_adx > self.strong_trend_threshold and prev_adx <= self.strong_trend_threshold:
+            # Determine trend direction from price
+            price_direction = "up" if data.close[-1] > data.close[-10] else "down"
+            signal = SignalType.BUY if price_direction == "up" else SignalType.SELL
+
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Strong Trend Emerging",
+                pattern_type=PatternType.TECHNICAL_INDICATOR,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=0.75,
+                signal=signal,
+                metadata={
+                    'adx': float(current_adx),
+                    'trend_direction': price_direction,
+                },
+                description=f"ADX {current_adx:.1f} - strong {price_direction}trend emerging",
+            ))
+
+        # Strong trend continuing
+        elif current_adx > self.strong_trend_threshold and prev_adx > self.strong_trend_threshold:
+            if current_adx > prev_adx:  # Strengthening
+                price_direction = "up" if data.close[-1] > data.close[-5] else "down"
+                signal = SignalType.HOLD
+
+                results.append(PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Strong Trend Continues",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    confidence=0.80,
+                    signal=signal,
+                    metadata={
+                        'adx': float(current_adx),
+                        'adx_prev': float(prev_adx),
+                        'trend_direction': price_direction,
+                    },
+                    description=f"ADX {current_adx:.1f} - strong trend continuing",
+                ))
+
+        # Weak trend / ranging market
+        elif current_adx < 20:
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Weak Trend / Range",
+                pattern_type=PatternType.TECHNICAL_INDICATOR,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=0.70,
+                signal=SignalType.HOLD,
+                metadata={'adx': float(current_adx)},
+                description=f"ADX {current_adx:.1f} - weak trend, range-bound market",
+            ))
+
+        return results
+
+    def _calculate_adx(self, high, low, close, period):
+        """Calculate Average Directional Index."""
+        # Calculate True Range
+        tr = np.maximum(
+            high[1:] - low[1:],
+            np.maximum(
+                np.abs(high[1:] - close[:-1]),
+                np.abs(low[1:] - close[:-1])
+            )
+        )
+
+        # Calculate Directional Movement
+        plus_dm = np.where(
+            (high[1:] - high[:-1]) > (low[:-1] - low[1:]),
+            np.maximum(high[1:] - high[:-1], 0),
+            0
+        )
+
+        minus_dm = np.where(
+            (low[:-1] - low[1:]) > (high[1:] - high[:-1]),
+            np.maximum(low[:-1] - low[1:], 0),
+            0
+        )
+
+        # Smooth using Wilder's smoothing (EMA-like)
+        atr = self._wilder_smooth(tr, period)
+        plus_di = 100 * self._wilder_smooth(plus_dm, period) / atr
+        minus_di = 100 * self._wilder_smooth(minus_dm, period) / atr
+
+        # Calculate DX and ADX
+        dx = 100 * np.abs(plus_di - minus_di) / (plus_di + minus_di + 1e-10)
+        adx = self._wilder_smooth(dx, period)
+
+        return adx
+
+    def _wilder_smooth(self, data, period):
+        """Wilder's smoothing method."""
+        alpha = 1.0 / period
+        smoothed = np.zeros_like(data)
+        smoothed[0] = data[0]
+
+        for i in range(1, len(data)):
+            smoothed[i] = alpha * data[i] + (1 - alpha) * smoothed[i-1]
+
+        return smoothed
+
+    def validate(self, result: PatternResult) -> bool:
+        """Validate ADX result."""
+        return result.pattern_type == PatternType.TECHNICAL_INDICATOR
+
+
+class ParabolicSARPattern(Pattern):
+    """
+    Parabolic SAR pattern detection.
+
+    Trend-following indicator that provides entry/exit points.
+    SAR flips when price crosses it, indicating trend reversal.
+    """
+
+    def __init__(self, acceleration: float = 0.02, maximum: float = 0.20):
+        super().__init__()
+        self.name = "Parabolic SAR"
+        self.acceleration = acceleration
+        self.maximum = maximum
+        self.description = "Parabolic SAR trend following"
+
+    def detect(self, data: OHLCV) -> List[PatternResult]:
+        """Detect Parabolic SAR patterns."""
+        results = []
+
+        if len(data.close) < 20:
+            return results
+
+        # Calculate SAR
+        sar = self._calculate_sar(data.high, data.low, data.close)
+
+        if len(sar) < 2:
+            return results
+
+        current_price = data.close[-1]
+        current_sar = sar[-1]
+        prev_sar = sar[-2]
+
+        # Bullish signal: price crosses above SAR
+        if current_price > current_sar and data.close[-2] <= prev_sar:
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Parabolic SAR Buy Signal",
+                pattern_type=PatternType.TECHNICAL_INDICATOR,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=0.75,
+                signal=SignalType.BUY,
+                entry_price=current_price,
+                stop_loss=current_sar,
+                metadata={
+                    'sar': float(current_sar),
+                    'price': float(current_price),
+                },
+                description=f"Price crossed above SAR at ${current_sar:.2f}",
+            ))
+
+        # Bearish signal: price crosses below SAR
+        elif current_price < current_sar and data.close[-2] >= prev_sar:
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Parabolic SAR Sell Signal",
+                pattern_type=PatternType.TECHNICAL_INDICATOR,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=0.75,
+                signal=SignalType.SELL,
+                entry_price=current_price,
+                stop_loss=current_sar,
+                metadata={
+                    'sar': float(current_sar),
+                    'price': float(current_price),
+                },
+                description=f"Price crossed below SAR at ${current_sar:.2f}",
+            ))
+
+        # Trend continuation
+        elif current_price > current_sar:
+            # Uptrend: SAR below price
+            results.append(PatternResult(
+                pattern_id=str(uuid.uuid4()),
+                pattern_name="Uptrend (SAR Below)",
+                pattern_type=PatternType.TECHNICAL_INDICATOR,
+                symbol="",
+                timeframe=None,
+                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                confidence=0.70,
+                signal=SignalType.HOLD,
+                stop_loss=current_sar,
+                metadata={
+                    'sar': float(current_sar),
+                    'price': float(current_price),
+                    'trend': 'up',
+                },
+                description=f"Uptrend continuing, SAR at ${current_sar:.2f}",
+            ))
+
+        return results
+
+    def _calculate_sar(self, high, low, close):
+        """Calculate Parabolic SAR."""
+        n = len(close)
+        sar = np.zeros(n)
+        trend = np.zeros(n)  # 1 for uptrend, -1 for downtrend
+        ep = np.zeros(n)  # Extreme point
+        af = np.zeros(n)  # Acceleration factor
+
+        # Initialize
+        sar[0] = low[0]
+        trend[0] = 1
+        ep[0] = high[0]
+        af[0] = self.acceleration
+
+        for i in range(1, n):
+            # Calculate SAR
+            sar[i] = sar[i-1] + af[i-1] * (ep[i-1] - sar[i-1])
+
+            # Check for trend reversal
+            if trend[i-1] == 1:  # Uptrend
+                if low[i] < sar[i]:
+                    # Trend reversal to downtrend
+                    trend[i] = -1
+                    sar[i] = ep[i-1]  # SAR becomes previous EP
+                    ep[i] = low[i]
+                    af[i] = self.acceleration
+                else:
+                    # Continue uptrend
+                    trend[i] = 1
+                    if high[i] > ep[i-1]:
+                        ep[i] = high[i]
+                        af[i] = min(af[i-1] + self.acceleration, self.maximum)
+                    else:
+                        ep[i] = ep[i-1]
+                        af[i] = af[i-1]
+
+                    # SAR cannot be above prior two lows
+                    sar[i] = min(sar[i], low[i-1])
+                    if i > 1:
+                        sar[i] = min(sar[i], low[i-2])
+
+            else:  # Downtrend
+                if high[i] > sar[i]:
+                    # Trend reversal to uptrend
+                    trend[i] = 1
+                    sar[i] = ep[i-1]
+                    ep[i] = high[i]
+                    af[i] = self.acceleration
+                else:
+                    # Continue downtrend
+                    trend[i] = -1
+                    if low[i] < ep[i-1]:
+                        ep[i] = low[i]
+                        af[i] = min(af[i-1] + self.acceleration, self.maximum)
+                    else:
+                        ep[i] = ep[i-1]
+                        af[i] = af[i-1]
+
+                    # SAR cannot be below prior two highs
+                    sar[i] = max(sar[i], high[i-1])
+                    if i > 1:
+                        sar[i] = max(sar[i], high[i-2])
+
+        return sar
+
+    def validate(self, result: PatternResult) -> bool:
+        """Validate Parabolic SAR result."""
+        return result.pattern_type == PatternType.TECHNICAL_INDICATOR
