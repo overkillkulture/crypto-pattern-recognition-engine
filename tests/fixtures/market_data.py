@@ -102,40 +102,50 @@ def generate_rsi_oversold(periods: int = 100, **kwargs) -> OHLCV:
     """
     Generate data that will trigger RSI oversold condition.
 
-    Creates strong downtrend followed by small bounce.
+    Creates aggressive downtrend followed by small bounce to trigger RSI < 30.
     """
     if kwargs.get('seed') is not None:
         np.random.seed(kwargs['seed'])
 
     initial_price = kwargs.get('initial_price', 50000.0)
 
-    # Strong downtrend
-    downtrend = generate_downtrend(periods=periods-10, volatility=0.03, **kwargs)
-
-    # Small bounce at end
-    bounce_returns = np.random.randn(10) * 0.01 + 0.001
-    bounce_prices = downtrend.close[-1] * np.cumprod(1 + bounce_returns)
-
-    # Combine
-    all_closes = np.concatenate([downtrend.close, bounce_prices])
-    all_timestamps = np.concatenate([
-        downtrend.timestamps,
-        downtrend.timestamps[-1] + np.arange(1, 11) * 3600
+    # Generate timestamps
+    timestamps = np.array([
+        (datetime.now() - timedelta(hours=periods-i)).timestamp()
+        for i in range(periods)
     ])
 
-    opens = np.roll(all_closes, 1)
+    # Create aggressive losing streak (90% of data) followed by tiny bounce (10% of data)
+    losing_streak_len = int(periods * 0.9)
+    bounce_len = periods - losing_streak_len
+
+    # Aggressive consistent losses to push RSI down
+    losing_returns = -np.abs(np.random.randn(losing_streak_len)) * 0.015 - 0.01  # Consistently negative
+
+    # Very small bounce at end (just enough to signal potential reversal, but still oversold)
+    bounce_returns = np.random.randn(bounce_len) * 0.005 + 0.002  # Tiny positive
+
+    # Combine returns
+    all_returns = np.concatenate([losing_returns, bounce_returns])
+
+    # Generate prices
+    prices = initial_price * np.cumprod(1 + all_returns)
+
+    # Generate OHLCV
+    closes = prices
+    opens = np.roll(closes, 1)
     opens[0] = initial_price
 
-    highs = np.maximum(opens, all_closes) * (1 + np.abs(np.random.randn(periods)) * 0.005)
-    lows = np.minimum(opens, all_closes) * (1 - np.abs(np.random.randn(periods)) * 0.005)
+    highs = np.maximum(opens, closes) * (1 + np.abs(np.random.randn(periods)) * 0.005)
+    lows = np.minimum(opens, closes) * (1 - np.abs(np.random.randn(periods)) * 0.005)
     volumes = np.random.lognormal(20, 1, periods) * 100
 
     return OHLCV(
-        timestamps=all_timestamps,
+        timestamps=timestamps,
         open=opens,
         high=highs,
         low=lows,
-        close=all_closes,
+        close=closes,
         volume=volumes,
     )
 
@@ -144,40 +154,50 @@ def generate_rsi_overbought(periods: int = 100, **kwargs) -> OHLCV:
     """
     Generate data that will trigger RSI overbought condition.
 
-    Creates strong uptrend followed by small pullback.
+    Creates aggressive uptrend followed by small pullback to trigger RSI > 70.
     """
     if kwargs.get('seed') is not None:
         np.random.seed(kwargs['seed'])
 
     initial_price = kwargs.get('initial_price', 50000.0)
 
-    # Strong uptrend
-    uptrend = generate_uptrend(periods=periods-10, volatility=0.03, **kwargs)
-
-    # Small pullback at end
-    pullback_returns = np.random.randn(10) * 0.01 - 0.001
-    pullback_prices = uptrend.close[-1] * np.cumprod(1 + pullback_returns)
-
-    # Combine
-    all_closes = np.concatenate([uptrend.close, pullback_prices])
-    all_timestamps = np.concatenate([
-        uptrend.timestamps,
-        uptrend.timestamps[-1] + np.arange(1, 11) * 3600
+    # Generate timestamps
+    timestamps = np.array([
+        (datetime.now() - timedelta(hours=periods-i)).timestamp()
+        for i in range(periods)
     ])
 
-    opens = np.roll(all_closes, 1)
+    # Create aggressive winning streak (90% of data) followed by tiny pullback (10% of data)
+    winning_streak_len = int(periods * 0.9)
+    pullback_len = periods - winning_streak_len
+
+    # Aggressive consistent gains to push RSI up
+    winning_returns = np.abs(np.random.randn(winning_streak_len)) * 0.015 + 0.01  # Consistently positive
+
+    # Very small pullback at end (just enough to signal potential reversal, but still overbought)
+    pullback_returns = np.random.randn(pullback_len) * 0.005 - 0.002  # Tiny negative
+
+    # Combine returns
+    all_returns = np.concatenate([winning_returns, pullback_returns])
+
+    # Generate prices
+    prices = initial_price * np.cumprod(1 + all_returns)
+
+    # Generate OHLCV
+    closes = prices
+    opens = np.roll(closes, 1)
     opens[0] = initial_price
 
-    highs = np.maximum(opens, all_closes) * (1 + np.abs(np.random.randn(periods)) * 0.005)
-    lows = np.minimum(opens, all_closes) * (1 - np.abs(np.random.randn(periods)) * 0.005)
+    highs = np.maximum(opens, closes) * (1 + np.abs(np.random.randn(periods)) * 0.005)
+    lows = np.minimum(opens, closes) * (1 - np.abs(np.random.randn(periods)) * 0.005)
     volumes = np.random.lognormal(20, 1, periods) * 100
 
     return OHLCV(
-        timestamps=all_timestamps,
+        timestamps=timestamps,
         open=opens,
         high=highs,
         low=lows,
-        close=all_closes,
+        close=closes,
         volume=volumes,
     )
 
