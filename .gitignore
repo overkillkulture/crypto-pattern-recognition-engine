@@ -66,3 +66,4 @@ models/*.pt
 # OS
 .DS_Store
 Thumbs.db
+INTEGRATION_STATE.json
