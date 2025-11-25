@@ -1,0 +1,64 @@
+# Dependabot configuration for automated dependency updates
+# Enables GitHub's AI-powered dependency management
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "overkillkulture"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "[Dependabot]"
+      include: "scope"
+    # Auto-merge patch updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Group updates
+    groups:
+      pytest:
+        patterns:
+          - "pytest*"
+      linting:
+        patterns:
+          - "flake8*"
+          - "black"
+          - "isort"
+          - "mypy"
+      async:
+        patterns:
+          - "asyncio*"
+          - "aiohttp*"
+      crypto:
+        patterns:
+          - "ccxt*"
+          - "binance*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "[Dependabot]"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "docker"
+      - "automated"

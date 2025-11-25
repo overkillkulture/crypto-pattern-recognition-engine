@@ -1,0 +1,66 @@
+# Auto-labeler configuration
+# Automatically labels PRs based on file changes
+
+# Documentation
+documentation:
+  - '**/*.md'
+  - 'docs/**/*'
+
+# Tests
+tests:
+  - 'tests/**/*'
+  - '**/*test*.py'
+
+# CI/CD
+ci-cd:
+  - '.github/**/*'
+  - 'Dockerfile'
+  - 'docker-compose.yml'
+
+# Dependencies
+dependencies:
+  - 'requirements.txt'
+  - 'requirements-dev.txt'
+  - 'setup.py'
+  - 'pyproject.toml'
+
+# Pattern Detection
+patterns:
+  - 'src/patterns/**/*'
+
+# Exchanges
+exchanges:
+  - 'src/exchanges/**/*'
+
+# Integration
+integration:
+  - 'src/integration/**/*'
+
+# Examples
+examples:
+  - 'examples/**/*'
+
+# Core
+core:
+  - 'src/core/**/*'
+
+# Trading
+trading:
+  - 'src/trading/**/*'
+  - 'src/backtest/**/*'
+
+# Data
+data:
+  - 'src/data/**/*'
+  - 'src/streaming/**/*'
+
+# Performance
+performance:
+  - 'src/utils/optimization.py'
+  - 'src/utils/performance.py'
+
+# Security
+security:
+  - 'src/utils/validation.py'
+  - '.github/workflows/codeql.yml'
+  - '.github/workflows/security*.yml'
