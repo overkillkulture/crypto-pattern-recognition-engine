@@ -15,8 +15,9 @@ import numpy as np
 
 sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
 
-from src.utils.optimization import (ProfileTimer, RollingWindow, StreamingStats,
-                                    VectorizedIndicators, cached_pattern)
+from src.utils.optimization import (ProfileTimer, RollingWindow,
+                                    StreamingStats, VectorizedIndicators,
+                                    cached_pattern)
 
 
 def generate_prices(n=1000):

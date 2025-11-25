@@ -15,7 +15,6 @@ sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
 from datetime import datetime
 from typing import List
 
-
 from src.core.types import PatternResult, SignalType
 from src.integration.context_sync import ContextSync
 # Integration layer

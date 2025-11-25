@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.core.types import (OHLCV, Alert, AnalysisResult, Exchange, ModelPrediction,
-                            PatternResult, Timeframe)
+from src.core.types import (OHLCV, Alert, AnalysisResult, Exchange,
+                            ModelPrediction, PatternResult, Timeframe)
 
 
 class Pattern(ABC):

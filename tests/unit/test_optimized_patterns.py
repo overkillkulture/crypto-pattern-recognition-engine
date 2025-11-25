@@ -15,7 +15,8 @@ from src.core.types import SignalType
 from src.patterns.optimized import (OptimizedBollingerBandsPattern,
                                     OptimizedMACDPattern, OptimizedRSIPattern,
                                     StreamingRSI)
-from tests.fixtures.market_data import (FIXTURE_MEDIUM, generate_macd_bullish_cross,
+from tests.fixtures.market_data import (FIXTURE_MEDIUM,
+                                        generate_macd_bullish_cross,
                                         generate_ohlcv,
                                         generate_rsi_overbought,
                                         generate_rsi_oversold)

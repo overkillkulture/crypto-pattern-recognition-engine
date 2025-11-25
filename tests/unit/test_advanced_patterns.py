@@ -1,6 +1,5 @@
 """Unit tests for advanced pattern detectors (ADX, Parabolic SAR, Stochastic)."""
 
-
 import pytest
 
 from src.core.types import SignalType

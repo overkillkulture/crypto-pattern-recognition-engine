@@ -1,6 +1,5 @@
 """Comprehensive tests for pattern detection."""
 
-
 import numpy as np
 
 from src.core.types import OHLCV, PatternType

@@ -14,7 +14,6 @@ class ValidationError(Exception):
     """Custom exception for validation errors."""
 
 
-
 class DataValidator:
     """Validator for market data and engine inputs."""
 
