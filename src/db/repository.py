@@ -1,19 +1,16 @@
 """Repository layer for database operations."""
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from sqlalchemy import select, update, delete, and_, or_, desc, func
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
-from src.db.models import (
-    PatternDetectionModel,
-    TradeModel,
-    AnalysisResultModel,
-    AlertModel,
-    BacktestResultModel,
-)
-from src.core.types import PatternResult, AnalysisResult
+from sqlalchemy import desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+
+from src.core.types import AnalysisResult, PatternResult
+from src.db.models import (AlertModel, AnalysisResultModel,
+                           BacktestResultModel, PatternDetectionModel,
+                           TradeModel)
 
 
 class PatternDetectionRepository:
@@ -53,7 +50,9 @@ class PatternDetectionRepository:
         return model
 
     @staticmethod
-    async def save_pattern_async(session: AsyncSession, pattern: PatternResult) -> PatternDetectionModel:
+    async def save_pattern_async(
+        session: AsyncSession, pattern: PatternResult
+    ) -> PatternDetectionModel:
         """Save a pattern detection (async)."""
         model = PatternDetectionModel(
             pattern_id=pattern.pattern_id,
@@ -77,11 +76,15 @@ class PatternDetectionRepository:
         return model
 
     @staticmethod
-    def get_by_pattern_id(session: Session, pattern_id: str) -> Optional[PatternDetectionModel]:
+    def get_by_pattern_id(
+        session: Session, pattern_id: str
+    ) -> Optional[PatternDetectionModel]:
         """Get pattern by ID."""
-        return session.query(PatternDetectionModel).filter(
-            PatternDetectionModel.pattern_id == pattern_id
-        ).first()
+        return (
+            session.query(PatternDetectionModel)
+            .filter(PatternDetectionModel.pattern_id == pattern_id)
+            .first()
+        )
 
     @staticmethod
     def get_recent_patterns(
@@ -118,9 +121,11 @@ class PatternDetectionRepository:
     @staticmethod
     def delete_old_patterns(session: Session, before_date: datetime) -> int:
         """Delete patterns older than specified date."""
-        result = session.query(PatternDetectionModel).filter(
-            PatternDetectionModel.timestamp < before_date
-        ).delete()
+        result = (
+            session.query(PatternDetectionModel)
+            .filter(PatternDetectionModel.timestamp < before_date)
+            .delete()
+        )
         return result
 
 
@@ -200,7 +205,9 @@ class TradeRepository:
         Returns:
             Updated trade model or None if not found
         """
-        trade = session.query(TradeModel).filter(TradeModel.trade_id == trade_id).first()
+        trade = (
+            session.query(TradeModel).filter(TradeModel.trade_id == trade_id).first()
+        )
 
         if trade:
             trade.exit_time = exit_time
@@ -215,7 +222,9 @@ class TradeRepository:
         return trade
 
     @staticmethod
-    def get_open_trades(session: Session, symbol: Optional[str] = None) -> List[TradeModel]:
+    def get_open_trades(
+        session: Session, symbol: Optional[str] = None
+    ) -> List[TradeModel]:
         """Get all open trades, optionally filtered by symbol."""
         query = session.query(TradeModel).filter(TradeModel.is_open == True)
 
@@ -245,7 +254,9 @@ class TradeRepository:
         return query.order_by(desc(TradeModel.entry_time)).limit(limit).all()
 
     @staticmethod
-    def get_trade_statistics(session: Session, symbol: Optional[str] = None) -> Dict[str, Any]:
+    def get_trade_statistics(
+        session: Session, symbol: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Calculate trade statistics."""
         query = session.query(TradeModel).filter(TradeModel.is_open == False)
 
@@ -256,25 +267,25 @@ class TradeRepository:
 
         if not trades:
             return {
-                'total_trades': 0,
-                'winning_trades': 0,
-                'losing_trades': 0,
-                'win_rate': 0.0,
-                'total_pnl': 0.0,
-                'avg_pnl': 0.0,
+                "total_trades": 0,
+                "winning_trades": 0,
+                "losing_trades": 0,
+                "win_rate": 0.0,
+                "total_pnl": 0.0,
+                "avg_pnl": 0.0,
             }
 
         winning = [t for t in trades if t.pnl > 0]
         losing = [t for t in trades if t.pnl <= 0]
 
         return {
-            'total_trades': len(trades),
-            'winning_trades': len(winning),
-            'losing_trades': len(losing),
-            'win_rate': (len(winning) / len(trades)) * 100,
-            'total_pnl': sum(t.pnl for t in trades),
-            'avg_pnl': sum(t.pnl for t in trades) / len(trades),
-            'total_fees': sum(t.fees for t in trades),
+            "total_trades": len(trades),
+            "winning_trades": len(winning),
+            "losing_trades": len(losing),
+            "win_rate": (len(winning) / len(trades)) * 100,
+            "total_pnl": sum(t.pnl for t in trades),
+            "avg_pnl": sum(t.pnl for t in trades) / len(trades),
+            "total_fees": sum(t.fees for t in trades),
         }
 
 
@@ -282,7 +293,9 @@ class AnalysisResultRepository:
     """Repository for analysis result operations."""
 
     @staticmethod
-    def save_analysis(session: Session, analysis: AnalysisResult) -> AnalysisResultModel:
+    def save_analysis(
+        session: Session, analysis: AnalysisResult
+    ) -> AnalysisResultModel:
         """
         Save an analysis result to the database.
 
@@ -304,16 +317,16 @@ class AnalysisResultRepository:
             volatility=analysis.volatility,
             volume_profile=analysis.volume_profile,
             risk_score=analysis.risk_score,
-            current_price=analysis.metadata.get('price', 0.0),
+            current_price=analysis.metadata.get("price", 0.0),
             support_levels=analysis.support_levels,
             resistance_levels=analysis.resistance_levels,
             num_patterns_detected=len(analysis.patterns),
             patterns_summary=[
                 {
-                    'name': p.pattern_name,
-                    'type': p.pattern_type.value,
-                    'signal': p.signal.value,
-                    'confidence': p.confidence,
+                    "name": p.pattern_name,
+                    "type": p.pattern_type.value,
+                    "signal": p.signal.value,
+                    "confidence": p.confidence,
                 }
                 for p in analysis.patterns[:10]  # Store top 10
             ],
@@ -326,7 +339,9 @@ class AnalysisResultRepository:
         return model
 
     @staticmethod
-    def get_latest_analysis(session: Session, symbol: str) -> Optional[AnalysisResultModel]:
+    def get_latest_analysis(
+        session: Session, symbol: str
+    ) -> Optional[AnalysisResultModel]:
         """Get the latest analysis for a symbol."""
         return (
             session.query(AnalysisResultModel)
@@ -412,7 +427,9 @@ class AlertRepository:
         sent_to: List[str],
     ) -> Optional[AlertModel]:
         """Mark an alert as sent."""
-        alert = session.query(AlertModel).filter(AlertModel.alert_id == alert_id).first()
+        alert = (
+            session.query(AlertModel).filter(AlertModel.alert_id == alert_id).first()
+        )
 
         if alert:
             alert.sent = True
@@ -424,7 +441,9 @@ class AlertRepository:
     @staticmethod
     def acknowledge_alert(session: Session, alert_id: str) -> Optional[AlertModel]:
         """Acknowledge an alert."""
-        alert = session.query(AlertModel).filter(AlertModel.alert_id == alert_id).first()
+        alert = (
+            session.query(AlertModel).filter(AlertModel.alert_id == alert_id).first()
+        )
 
         if alert:
             alert.acknowledged = True
@@ -433,7 +452,9 @@ class AlertRepository:
         return alert
 
     @staticmethod
-    def get_unsent_alerts(session: Session, priority: Optional[str] = None) -> List[AlertModel]:
+    def get_unsent_alerts(
+        session: Session, priority: Optional[str] = None
+    ) -> List[AlertModel]:
         """Get alerts that haven't been sent yet."""
         query = session.query(AlertModel).filter(AlertModel.sent == False)
 
@@ -503,22 +524,22 @@ class BacktestResultRepository:
             end_date=end_date,
             initial_capital=initial_capital,
             final_capital=final_capital,
-            total_return=metrics.get('total_return', 0.0),
-            total_return_pct=metrics.get('total_return_pct', 0.0),
-            annualized_return_pct=metrics.get('annualized_return_pct'),
-            total_trades=metrics.get('total_trades', 0),
-            winning_trades=metrics.get('winning_trades', 0),
-            losing_trades=metrics.get('losing_trades', 0),
-            win_rate=metrics.get('win_rate'),
-            profit_factor=metrics.get('profit_factor'),
-            sharpe_ratio=metrics.get('sharpe_ratio'),
-            sortino_ratio=metrics.get('sortino_ratio'),
-            calmar_ratio=metrics.get('calmar_ratio'),
-            max_drawdown=metrics.get('max_drawdown'),
-            max_drawdown_pct=metrics.get('max_drawdown_pct'),
-            avg_win=metrics.get('avg_win'),
-            avg_loss=metrics.get('avg_loss'),
-            expectancy=metrics.get('expectancy'),
+            total_return=metrics.get("total_return", 0.0),
+            total_return_pct=metrics.get("total_return_pct", 0.0),
+            annualized_return_pct=metrics.get("annualized_return_pct"),
+            total_trades=metrics.get("total_trades", 0),
+            winning_trades=metrics.get("winning_trades", 0),
+            losing_trades=metrics.get("losing_trades", 0),
+            win_rate=metrics.get("win_rate"),
+            profit_factor=metrics.get("profit_factor"),
+            sharpe_ratio=metrics.get("sharpe_ratio"),
+            sortino_ratio=metrics.get("sortino_ratio"),
+            calmar_ratio=metrics.get("calmar_ratio"),
+            max_drawdown=metrics.get("max_drawdown"),
+            max_drawdown_pct=metrics.get("max_drawdown_pct"),
+            avg_win=metrics.get("avg_win"),
+            avg_loss=metrics.get("avg_loss"),
+            expectancy=metrics.get("expectancy"),
             metrics_json=metrics,
         )
 
@@ -527,11 +548,15 @@ class BacktestResultRepository:
         return model
 
     @staticmethod
-    def get_backtest_by_id(session: Session, backtest_id: str) -> Optional[BacktestResultModel]:
+    def get_backtest_by_id(
+        session: Session, backtest_id: str
+    ) -> Optional[BacktestResultModel]:
         """Get backtest result by ID."""
-        return session.query(BacktestResultModel).filter(
-            BacktestResultModel.backtest_id == backtest_id
-        ).first()
+        return (
+            session.query(BacktestResultModel)
+            .filter(BacktestResultModel.backtest_id == backtest_id)
+            .first()
+        )
 
     @staticmethod
     def get_strategy_results(
@@ -552,7 +577,7 @@ class BacktestResultRepository:
     @staticmethod
     def get_best_strategies(
         session: Session,
-        metric: str = 'sharpe_ratio',
+        metric: str = "sharpe_ratio",
         limit: int = 10,
     ) -> List[BacktestResultModel]:
         """
@@ -566,7 +591,9 @@ class BacktestResultRepository:
         Returns:
             List of backtest results sorted by metric
         """
-        order_column = getattr(BacktestResultModel, metric, BacktestResultModel.sharpe_ratio)
+        order_column = getattr(
+            BacktestResultModel, metric, BacktestResultModel.sharpe_ratio
+        )
         return (
             session.query(BacktestResultModel)
             .order_by(desc(order_column))
@@ -590,5 +617,5 @@ class BacktestResultRepository:
 
         return query.order_by(
             BacktestResultModel.strategy_name,
-            desc(BacktestResultModel.total_return_pct)
+            desc(BacktestResultModel.total_return_pct),
         ).all()

@@ -10,19 +10,16 @@ High-performance implementations using:
 These are drop-in replacements for standard patterns with 2-10x speedup.
 """
 
-import numpy as np
-from typing import List
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List
 
-from src.core.types import OHLCV, PatternResult, SignalType, PatternType
+import numpy as np
+
+from src.core.types import OHLCV, PatternResult, PatternType, SignalType
 from src.patterns.detector import Pattern
-from src.utils.optimization import (
-    cached_pattern,
-    VectorizedIndicators,
-    StreamingStats,
-    ProfileTimer,
-)
+from src.utils.optimization import (StreamingStats, VectorizedIndicators,
+                                    cached_pattern)
 
 
 class OptimizedRSIPattern(Pattern):
@@ -62,9 +59,9 @@ class OptimizedRSIPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate RSI pattern result."""
-        if 'rsi' not in result.metadata:
+        if "rsi" not in result.metadata:
             return False
-        rsi = result.metadata['rsi']
+        rsi = result.metadata["rsi"]
         return 0 <= rsi <= 100
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
@@ -97,39 +94,48 @@ class OptimizedRSIPattern(Pattern):
         patterns = []
 
         if current_rsi <= self.oversold:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="RSI Oversold",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=min((self.oversold - current_rsi) / self.oversold + 0.7, 1.0),
-                metadata={
-                    'rsi': float(current_rsi),
-                    'threshold': self.oversold,
-                    'type': 'oversold',
-                },
-                description=f"RSI oversold at {current_rsi:.2f}",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="RSI Oversold",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=min(
+                        (self.oversold - current_rsi) / self.oversold + 0.7, 1.0
+                    ),
+                    metadata={
+                        "rsi": float(current_rsi),
+                        "threshold": self.oversold,
+                        "type": "oversold",
+                    },
+                    description=f"RSI oversold at {current_rsi:.2f}",
+                )
+            )
         elif current_rsi >= self.overbought:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="RSI Overbought",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=min((current_rsi - self.overbought) / (100 - self.overbought) + 0.7, 1.0),
-                metadata={
-                    'rsi': float(current_rsi),
-                    'threshold': self.overbought,
-                    'type': 'overbought',
-                },
-                description=f"RSI overbought at {current_rsi:.2f}",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="RSI Overbought",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=min(
+                        (current_rsi - self.overbought) / (100 - self.overbought) + 0.7,
+                        1.0,
+                    ),
+                    metadata={
+                        "rsi": float(current_rsi),
+                        "threshold": self.overbought,
+                        "type": "overbought",
+                    },
+                    description=f"RSI overbought at {current_rsi:.2f}",
+                )
+            )
 
         return patterns
 
@@ -171,7 +177,7 @@ class OptimizedMACDPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate MACD pattern result."""
-        required_keys = ['macd', 'signal', 'histogram']
+        required_keys = ["macd", "signal", "histogram"]
         return all(key in result.metadata for key in required_keys)
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
@@ -227,47 +233,55 @@ class OptimizedMACDPattern(Pattern):
 
         # Bullish crossover (MACD crosses above signal)
         if prev_hist < 0 and current_hist > 0:
-            confidence = min(abs(current_hist) / (abs(prev_hist) + abs(current_hist)), 0.95)
+            confidence = min(
+                abs(current_hist) / (abs(prev_hist) + abs(current_hist)), 0.95
+            )
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="MACD Bullish Crossover",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=0.7 + confidence * 0.3,
-                metadata={
-                    'macd': float(macd_line[-1]),
-                    'signal': float(signal_line[-1]),
-                    'histogram': float(current_hist),
-                    'type': 'bullish_crossover',
-                },
-                description=f"MACD bullish crossover (histogram: {current_hist:.4f})",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="MACD Bullish Crossover",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=0.7 + confidence * 0.3,
+                    metadata={
+                        "macd": float(macd_line[-1]),
+                        "signal": float(signal_line[-1]),
+                        "histogram": float(current_hist),
+                        "type": "bullish_crossover",
+                    },
+                    description=f"MACD bullish crossover (histogram: {current_hist:.4f})",
+                )
+            )
 
         # Bearish crossover (MACD crosses below signal)
         elif prev_hist > 0 and current_hist < 0:
-            confidence = min(abs(current_hist) / (abs(prev_hist) + abs(current_hist)), 0.95)
+            confidence = min(
+                abs(current_hist) / (abs(prev_hist) + abs(current_hist)), 0.95
+            )
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="MACD Bearish Crossover",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=0.7 + confidence * 0.3,
-                metadata={
-                    'macd': float(macd_line[-1]),
-                    'signal': float(signal_line[-1]),
-                    'histogram': float(current_hist),
-                    'type': 'bearish_crossover',
-                },
-                description=f"MACD bearish crossover (histogram: {current_hist:.4f})",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="MACD Bearish Crossover",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=0.7 + confidence * 0.3,
+                    metadata={
+                        "macd": float(macd_line[-1]),
+                        "signal": float(signal_line[-1]),
+                        "histogram": float(current_hist),
+                        "type": "bearish_crossover",
+                    },
+                    description=f"MACD bearish crossover (histogram: {current_hist:.4f})",
+                )
+            )
 
         return patterns
 
@@ -306,7 +320,7 @@ class OptimizedBollingerBandsPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate Bollinger Bands pattern result."""
-        required_keys = ['price', 'lower_band', 'middle_band', 'upper_band']
+        required_keys = ["price", "lower_band", "middle_band", "upper_band"]
         return all(key in result.metadata for key in required_keys)
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
@@ -344,50 +358,54 @@ class OptimizedBollingerBandsPattern(Pattern):
             distance_pct = abs((current_price - current_lower) / band_width)
             confidence = min(0.7 + (1 - distance_pct) * 0.3, 1.0)
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="BB Lower Band Touch",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=confidence,
-                metadata={
-                    'price': float(current_price),
-                    'lower_band': float(current_lower),
-                    'middle_band': float(current_middle),
-                    'upper_band': float(current_upper),
-                    'band_width_pct': float((band_width / current_middle) * 100),
-                    'type': 'lower_touch',
-                },
-                description=f"Price at lower Bollinger Band ({current_price:.2f} <= {current_lower:.2f})",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="BB Lower Band Touch",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=confidence,
+                    metadata={
+                        "price": float(current_price),
+                        "lower_band": float(current_lower),
+                        "middle_band": float(current_middle),
+                        "upper_band": float(current_upper),
+                        "band_width_pct": float((band_width / current_middle) * 100),
+                        "type": "lower_touch",
+                    },
+                    description=f"Price at lower Bollinger Band ({current_price:.2f} <= {current_lower:.2f})",
+                )
+            )
 
         # Price near upper band (overbought)
         elif current_price >= current_upper:
             distance_pct = abs((current_price - current_upper) / band_width)
             confidence = min(0.7 + (1 - distance_pct) * 0.3, 1.0)
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="BB Upper Band Touch",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=confidence,
-                metadata={
-                    'price': float(current_price),
-                    'lower_band': float(current_lower),
-                    'middle_band': float(current_middle),
-                    'upper_band': float(current_upper),
-                    'band_width_pct': float((band_width / current_middle) * 100),
-                    'type': 'upper_touch',
-                },
-                description=f"Price at upper Bollinger Band ({current_price:.2f} >= {current_upper:.2f})",
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="BB Upper Band Touch",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=confidence,
+                    metadata={
+                        "price": float(current_price),
+                        "lower_band": float(current_lower),
+                        "middle_band": float(current_middle),
+                        "upper_band": float(current_upper),
+                        "band_width_pct": float((band_width / current_middle) * 100),
+                        "type": "upper_touch",
+                    },
+                    description=f"Price at upper Bollinger Band ({current_price:.2f} >= {current_upper:.2f})",
+                )
+            )
 
         return patterns
 
@@ -462,8 +480,8 @@ class StreamingRSI:
 
 # Export optimized patterns
 __all__ = [
-    'OptimizedRSIPattern',
-    'OptimizedMACDPattern',
-    'OptimizedBollingerBandsPattern',
-    'StreamingRSI',
+    "OptimizedRSIPattern",
+    "OptimizedMACDPattern",
+    "OptimizedBollingerBandsPattern",
+    "StreamingRSI",
 ]

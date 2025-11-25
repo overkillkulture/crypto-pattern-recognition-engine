@@ -2,14 +2,15 @@
 
 import asyncio
 import logging
-from typing import List, Dict, Any, Optional, Callable
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-from collections import deque
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
 
-from src.core.types import OHLCV, PatternResult, Exchange, Timeframe
 from src.core.interfaces import PatternDetector
+from src.core.types import OHLCV, Exchange, PatternResult, Timeframe
 from src.streaming.websocket import WebSocketClient, WebSocketHandler
 
 logger = logging.getLogger(__name__)
@@ -139,24 +140,24 @@ class StreamingPatternHandler(WebSocketHandler):
         """Process incoming WebSocket message."""
         try:
             # Handle kline (candlestick) data
-            if 'e' in data and data['e'] == 'kline':
-                await self._handle_kline(data['k'])
+            if "e" in data and data["e"] == "kline":
+                await self._handle_kline(data["k"])
 
         except Exception as e:
             logger.error(f"Error processing stream message: {e}")
 
     async def _handle_kline(self, kline: Dict[str, Any]):
         """Process kline data and detect patterns."""
-        timestamp = kline['t'] / 1000  # Convert ms to seconds
-        open_price = float(kline['o'])
-        high_price = float(kline['h'])
-        low_price = float(kline['l'])
-        close_price = float(kline['c'])
-        volume = float(kline['v'])
-        is_closed = kline['x']
+        timestamp = kline["t"] / 1000  # Convert ms to seconds
+        open_price = float(kline["o"])
+        high_price = float(kline["h"])
+        low_price = float(kline["l"])
+        close_price = float(kline["c"])
+        volume = float(kline["v"])
+        is_closed = kline["x"]
 
         # Check if this is a new candle
-        if self.current_candle_timestamp != kline['t']:
+        if self.current_candle_timestamp != kline["t"]:
             # New candle - add to buffer
             if self.current_candle_timestamp is not None:
                 # Previous candle closed, add it
@@ -169,7 +170,7 @@ class StreamingPatternHandler(WebSocketHandler):
                     volume=volume,
                 )
 
-            self.current_candle_timestamp = kline['t']
+            self.current_candle_timestamp = kline["t"]
 
         else:
             # Update current candle
@@ -214,7 +215,9 @@ class StreamingPatternHandler(WebSocketHandler):
                     detected_patterns.extend(patterns)
 
                 except Exception as e:
-                    logger.error(f"Pattern detector {detector.__class__.__name__} failed: {e}")
+                    logger.error(
+                        f"Pattern detector {detector.__class__.__name__} failed: {e}"
+                    )
 
             # Notify on new patterns
             if detected_patterns:
@@ -335,7 +338,7 @@ class StreamingEngine:
         """Build WebSocket URL for exchange."""
         # Binance WebSocket URLs
         if self.config.exchange == Exchange.BINANCE:
-            symbol = self.config.symbol.replace('/', '').lower()
+            symbol = self.config.symbol.replace("/", "").lower()
             interval = self._timeframe_to_binance_interval(self.config.timeframe)
             return f"wss://stream.binance.com:9443/ws/{symbol}@kline_{interval}"
 
@@ -345,14 +348,14 @@ class StreamingEngine:
     def _timeframe_to_binance_interval(self, timeframe: Timeframe) -> str:
         """Convert Timeframe to Binance interval string."""
         mapping = {
-            Timeframe.ONE_MINUTE: '1m',
-            Timeframe.FIVE_MINUTES: '5m',
-            Timeframe.FIFTEEN_MINUTES: '15m',
-            Timeframe.ONE_HOUR: '1h',
-            Timeframe.FOUR_HOURS: '4h',
-            Timeframe.ONE_DAY: '1d',
+            Timeframe.ONE_MINUTE: "1m",
+            Timeframe.FIVE_MINUTES: "5m",
+            Timeframe.FIFTEEN_MINUTES: "15m",
+            Timeframe.ONE_HOUR: "1h",
+            Timeframe.FOUR_HOURS: "4h",
+            Timeframe.ONE_DAY: "1d",
         }
-        return mapping.get(timeframe, '1h')
+        return mapping.get(timeframe, "1h")
 
     async def _handle_pattern(self, pattern: PatternResult):
         """Handle detected pattern by notifying all callbacks."""

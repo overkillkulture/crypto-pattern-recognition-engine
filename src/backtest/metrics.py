@@ -1,7 +1,8 @@
 """Backtesting performance metrics calculator."""
 
+from typing import TYPE_CHECKING, Any, Dict
+
 import numpy as np
-from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backtest.engine import BacktestEngine
@@ -11,7 +12,7 @@ class BacktestMetrics:
     """Calculate performance metrics for backtest results."""
 
     @staticmethod
-    def calculate(engine: 'BacktestEngine') -> Dict[str, Any]:
+    def calculate(engine: "BacktestEngine") -> Dict[str, Any]:
         """
         Calculate comprehensive backtest metrics.
 
@@ -27,18 +28,18 @@ class BacktestMetrics:
 
         if not trades:
             return {
-                'total_return': 0.0,
-                'total_return_pct': 0.0,
-                'total_trades': 0,
-                'winning_trades': 0,
-                'losing_trades': 0,
-                'win_rate': 0.0,
-                'avg_win': 0.0,
-                'avg_loss': 0.0,
-                'profit_factor': 0.0,
-                'sharpe_ratio': 0.0,
-                'max_drawdown': 0.0,
-                'max_drawdown_pct': 0.0,
+                "total_return": 0.0,
+                "total_return_pct": 0.0,
+                "total_trades": 0,
+                "winning_trades": 0,
+                "losing_trades": 0,
+                "win_rate": 0.0,
+                "avg_win": 0.0,
+                "avg_loss": 0.0,
+                "profit_factor": 0.0,
+                "sharpe_ratio": 0.0,
+                "max_drawdown": 0.0,
+                "max_drawdown_pct": 0.0,
             }
 
         # Basic metrics
@@ -74,64 +75,68 @@ class BacktestMetrics:
         sortino_ratio = BacktestMetrics._calculate_sortino(returns)
 
         # Calmar ratio
-        calmar_ratio = (total_return_pct / 100) / (max_dd_pct / 100) if max_dd_pct > 0 else 0
+        calmar_ratio = (
+            (total_return_pct / 100) / (max_dd_pct / 100) if max_dd_pct > 0 else 0
+        )
 
         # Average trade duration
         durations = []
         for trade in trades:
             if trade.entry_time and trade.exit_time:
-                duration = (trade.exit_time - trade.entry_time).total_seconds() / 3600  # hours
+                duration = (
+                    trade.exit_time - trade.entry_time
+                ).total_seconds() / 3600  # hours
                 durations.append(duration)
 
         avg_duration_hours = np.mean(durations) if durations else 0
 
         # Consecutive wins/losses
-        max_consec_wins, max_consec_losses = BacktestMetrics._calculate_consecutive_trades(trades)
+        max_consec_wins, max_consec_losses = (
+            BacktestMetrics._calculate_consecutive_trades(trades)
+        )
 
         # Expectancy
         expectancy = (win_rate / 100 * avg_win) - ((100 - win_rate) / 100 * avg_loss)
 
         return {
             # Returns
-            'total_return': total_return,
-            'total_return_pct': total_return_pct,
-            'annualized_return_pct': BacktestMetrics._annualize_return(
-                total_return_pct / 100,
-                len(equity_curve)
-            ) * 100,
-
+            "total_return": total_return,
+            "total_return_pct": total_return_pct,
+            "annualized_return_pct": BacktestMetrics._annualize_return(
+                total_return_pct / 100, len(equity_curve)
+            )
+            * 100,
             # Trade statistics
-            'total_trades': total_trades,
-            'winning_trades': num_wins,
-            'losing_trades': num_losses,
-            'win_rate': win_rate,
-
+            "total_trades": total_trades,
+            "winning_trades": num_wins,
+            "losing_trades": num_losses,
+            "win_rate": win_rate,
             # Win/Loss metrics
-            'avg_win': avg_win,
-            'avg_loss': avg_loss,
-            'avg_win_pct': (avg_win / initial_capital * 100) if initial_capital > 0 else 0,
-            'avg_loss_pct': (avg_loss / initial_capital * 100) if initial_capital > 0 else 0,
-            'largest_win': max([t.pnl for t in trades], default=0),
-            'largest_loss': min([t.pnl for t in trades], default=0),
-
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "avg_win_pct": (
+                (avg_win / initial_capital * 100) if initial_capital > 0 else 0
+            ),
+            "avg_loss_pct": (
+                (avg_loss / initial_capital * 100) if initial_capital > 0 else 0
+            ),
+            "largest_win": max([t.pnl for t in trades], default=0),
+            "largest_loss": min([t.pnl for t in trades], default=0),
             # Ratios
-            'profit_factor': profit_factor,
-            'sharpe_ratio': sharpe_ratio,
-            'sortino_ratio': sortino_ratio,
-            'calmar_ratio': calmar_ratio,
-
+            "profit_factor": profit_factor,
+            "sharpe_ratio": sharpe_ratio,
+            "sortino_ratio": sortino_ratio,
+            "calmar_ratio": calmar_ratio,
             # Risk metrics
-            'max_drawdown': max_dd,
-            'max_drawdown_pct': max_dd_pct,
-
+            "max_drawdown": max_dd,
+            "max_drawdown_pct": max_dd_pct,
             # Other
-            'expectancy': expectancy,
-            'avg_trade_duration_hours': avg_duration_hours,
-            'max_consecutive_wins': max_consec_wins,
-            'max_consecutive_losses': max_consec_losses,
-
+            "expectancy": expectancy,
+            "avg_trade_duration_hours": avg_duration_hours,
+            "max_consecutive_wins": max_consec_wins,
+            "max_consecutive_losses": max_consec_losses,
             # Fees
-            'total_fees': sum(t.fees for t in trades),
+            "total_fees": sum(t.fees for t in trades),
         }
 
     @staticmethod
@@ -207,7 +212,9 @@ class BacktestMetrics:
         return max_wins, max_losses
 
     @staticmethod
-    def _annualize_return(total_return: float, periods: int, periods_per_year: int = 365) -> float:
+    def _annualize_return(
+        total_return: float, periods: int, periods_per_year: int = 365
+    ) -> float:
         """Annualize total return."""
         if periods == 0:
             return 0.0
@@ -226,7 +233,9 @@ class BacktestMetrics:
         print("=" * 60)
 
         print(f"\nReturns:")
-        print(f"  Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)")
+        print(
+            f"  Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)"
+        )
         print(f"  Annualized Return: {metrics['annualized_return_pct']:.2f}%")
 
         print(f"\nTrade Statistics:")
@@ -236,8 +245,12 @@ class BacktestMetrics:
         print(f"  Win Rate: {metrics['win_rate']:.2f}%")
 
         print(f"\nWin/Loss Metrics:")
-        print(f"  Average Win: ${metrics['avg_win']:.2f} ({metrics['avg_win_pct']:.2f}%)")
-        print(f"  Average Loss: ${metrics['avg_loss']:.2f} ({metrics['avg_loss_pct']:.2f}%)")
+        print(
+            f"  Average Win: ${metrics['avg_win']:.2f} ({metrics['avg_win_pct']:.2f}%)"
+        )
+        print(
+            f"  Average Loss: ${metrics['avg_loss']:.2f} ({metrics['avg_loss_pct']:.2f}%)"
+        )
         print(f"  Largest Win: ${metrics['largest_win']:.2f}")
         print(f"  Largest Loss: ${metrics['largest_loss']:.2f}")
 
@@ -248,7 +261,9 @@ class BacktestMetrics:
         print(f"  Calmar Ratio: {metrics['calmar_ratio']:.2f}")
 
         print(f"\nRisk Metrics:")
-        print(f"  Max Drawdown: ${metrics['max_drawdown']:.2f} ({metrics['max_drawdown_pct']:.2f}%)")
+        print(
+            f"  Max Drawdown: ${metrics['max_drawdown']:.2f} ({metrics['max_drawdown_pct']:.2f}%)"
+        )
         print(f"  Max Consecutive Wins: {metrics['max_consecutive_wins']}")
         print(f"  Max Consecutive Losses: {metrics['max_consecutive_losses']}")
 

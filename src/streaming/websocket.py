@@ -3,9 +3,9 @@
 import asyncio
 import json
 import logging
-from typing import Callable, Optional, Dict, Any, List
-from datetime import datetime
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 import websockets
 from websockets.exceptions import ConnectionClosed, WebSocketException
@@ -24,7 +24,6 @@ class WebSocketHandler(ABC):
         Args:
             data: Parsed message data
         """
-        pass
 
     async def on_error(self, error: Exception):
         """
@@ -306,15 +305,15 @@ class BinanceWebSocketHandler(WebSocketHandler):
         """Process Binance WebSocket message."""
         try:
             # Handle kline (candlestick) data
-            if 'e' in data and data['e'] == 'kline':
-                await self._handle_kline(data['k'])
+            if "e" in data and data["e"] == "kline":
+                await self._handle_kline(data["k"])
 
             # Handle trade data
-            elif 'e' in data and data['e'] == 'trade':
+            elif "e" in data and data["e"] == "trade":
                 await self._handle_trade(data)
 
             # Handle depth (order book) updates
-            elif 'e' in data and data['e'] == 'depthUpdate':
+            elif "e" in data and data["e"] == "depthUpdate":
                 await self._handle_depth(data)
 
             self.last_update = datetime.utcnow()
@@ -327,13 +326,13 @@ class BinanceWebSocketHandler(WebSocketHandler):
         """Process kline/candlestick data."""
         if self.on_candle:
             candle_data = {
-                'timestamp': kline['t'],
-                'open': float(kline['o']),
-                'high': float(kline['h']),
-                'low': float(kline['l']),
-                'close': float(kline['c']),
-                'volume': float(kline['v']),
-                'is_closed': kline['x'],
+                "timestamp": kline["t"],
+                "open": float(kline["o"]),
+                "high": float(kline["h"]),
+                "low": float(kline["l"]),
+                "close": float(kline["c"]),
+                "volume": float(kline["v"]),
+                "is_closed": kline["x"],
             }
             await self.on_candle(candle_data)
 
@@ -343,4 +342,6 @@ class BinanceWebSocketHandler(WebSocketHandler):
 
     async def _handle_depth(self, depth: Dict[str, Any]):
         """Process order book depth update."""
-        logger.debug(f"Depth update: {len(depth.get('b', []))} bids, {len(depth.get('a', []))} asks")
+        logger.debug(
+            f"Depth update: {len(depth.get('b', []))} bids, {len(depth.get('a', []))} asks"
+        )

@@ -1,12 +1,13 @@
 """Unit tests for advanced pattern detectors (ADX, Parabolic SAR, Stochastic)."""
 
-import pytest
-import numpy as np
-from datetime import datetime, timedelta
 
-from src.patterns.advanced import ADXPattern, ParabolicSARPattern, StochasticPattern
-from src.core.types import OHLCV, SignalType
-from tests.fixtures.market_data import generate_ohlcv, generate_uptrend, generate_downtrend
+import pytest
+
+from src.core.types import SignalType
+from src.patterns.advanced import (ADXPattern, ParabolicSARPattern,
+                                   StochasticPattern)
+from tests.fixtures.market_data import (generate_downtrend, generate_ohlcv,
+                                        generate_uptrend)
 
 
 class TestADXPattern:
@@ -45,10 +46,10 @@ class TestADXPattern:
 
         # Check metadata
         for pattern in patterns:
-            assert 'adx' in pattern.metadata
-            assert 'plus_di' in pattern.metadata
-            assert 'minus_di' in pattern.metadata
-            assert pattern.metadata['adx'] >= 0
+            assert "adx" in pattern.metadata
+            assert "plus_di" in pattern.metadata
+            assert "minus_di" in pattern.metadata
+            assert pattern.metadata["adx"] >= 0
 
     def test_detect_strong_downtrend(self):
         """Test ADX detecting strong downtrend."""
@@ -61,8 +62,8 @@ class TestADXPattern:
 
         # Check metadata
         for pattern in patterns:
-            assert 'adx' in pattern.metadata
-            assert 'trend_strength' in pattern.metadata
+            assert "adx" in pattern.metadata
+            assert "trend_strength" in pattern.metadata
 
     def test_validate_correct_pattern(self):
         """Test validation of correct ADX pattern."""
@@ -125,10 +126,10 @@ class TestParabolicSARPattern:
 
         # Check metadata
         pattern = patterns[0]
-        assert 'sar' in pattern.metadata
-        assert 'price' in pattern.metadata
-        assert 'trend' in pattern.metadata
-        assert 'reversal' in pattern.metadata
+        assert "sar" in pattern.metadata
+        assert "price" in pattern.metadata
+        assert "trend" in pattern.metadata
+        assert "reversal" in pattern.metadata
 
     def test_detect_downtrend(self):
         """Test SAR detecting downtrend."""
@@ -141,7 +142,7 @@ class TestParabolicSARPattern:
 
         # Check for downtrend signals
         pattern = patterns[0]
-        assert 'trend' in pattern.metadata
+        assert "trend" in pattern.metadata
 
     def test_validate_correct_pattern(self):
         """Test validation of correct SAR pattern."""
@@ -204,10 +205,10 @@ class TestStochasticPattern:
         # Check metadata if patterns found
         if len(patterns) > 0:
             pattern = patterns[0]
-            assert 'k' in pattern.metadata
-            assert 'd' in pattern.metadata
-            assert 0 <= pattern.metadata['k'] <= 100
-            assert 0 <= pattern.metadata['d'] <= 100
+            assert "k" in pattern.metadata
+            assert "d" in pattern.metadata
+            assert 0 <= pattern.metadata["k"] <= 100
+            assert 0 <= pattern.metadata["d"] <= 100
 
     def test_detect_overbought(self):
         """Test Stochastic detecting overbought condition."""
@@ -219,8 +220,8 @@ class TestStochasticPattern:
         # Check metadata if patterns found
         if len(patterns) > 0:
             pattern = patterns[0]
-            assert 'k' in pattern.metadata
-            assert 'd' in pattern.metadata
+            assert "k" in pattern.metadata
+            assert "d" in pattern.metadata
 
     def test_validate_correct_pattern(self):
         """Test validation of correct Stochastic pattern."""
@@ -254,9 +255,9 @@ class TestStochasticPattern:
 
         if len(patterns) > 0:
             pattern = patterns[0]
-            assert 'k' in pattern.metadata
-            assert 'd' in pattern.metadata
-            assert 'zone' in pattern.metadata
+            assert "k" in pattern.metadata
+            assert "d" in pattern.metadata
+            assert "zone" in pattern.metadata
 
 
 class TestAdvancedPatternsIntegration:
@@ -323,8 +324,16 @@ class TestAdvancedPatternsIntegration:
 
         if len(adx_patterns) > 0 and len(sar_patterns) > 0:
             # Just check they produced valid signals
-            assert adx_patterns[0].signal in [SignalType.BUY, SignalType.SELL, SignalType.HOLD]
-            assert sar_patterns[0].signal in [SignalType.BUY, SignalType.SELL, SignalType.HOLD]
+            assert adx_patterns[0].signal in [
+                SignalType.BUY,
+                SignalType.SELL,
+                SignalType.HOLD,
+            ]
+            assert sar_patterns[0].signal in [
+                SignalType.BUY,
+                SignalType.SELL,
+                SignalType.HOLD,
+            ]
 
 
 if __name__ == "__main__":

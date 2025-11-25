@@ -5,11 +5,11 @@ This module ensures both processing streams operate on compatible worldviews,
 synchronizing state and maintaining coherence over time.
 """
 
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
 import json
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -20,6 +20,7 @@ class SharedContext:
     This structure maintains the common worldview that both
     analytical and holistic processing rely on.
     """
+
     timestamp: datetime
     market_state: str  # "bullish", "bearish", "neutral", "volatile"
     consciousness_state: str  # "expanding", "contracting", "stable", "transforming"
@@ -30,18 +31,18 @@ class SharedContext:
     def to_dict(self) -> Dict:
         """Export for serialization."""
         return {
-            'timestamp': self.timestamp.isoformat(),
-            'market_state': self.market_state,
-            'consciousness_state': self.consciousness_state,
-            'coherence_level': self.coherence_level,
-            'active_patterns': self.active_patterns,
-            'metadata': self.metadata,
+            "timestamp": self.timestamp.isoformat(),
+            "market_state": self.market_state,
+            "consciousness_state": self.consciousness_state,
+            "coherence_level": self.coherence_level,
+            "active_patterns": self.active_patterns,
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'SharedContext':
+    def from_dict(cls, data: Dict) -> "SharedContext":
         """Import from serialization."""
-        data['timestamp'] = datetime.fromisoformat(data['timestamp'])
+        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
         return cls(**data)
 
 
@@ -84,7 +85,7 @@ class ContextSync:
             consciousness_state="stable",
             coherence_level=1.0,
             active_patterns={},
-            metadata={}
+            metadata={},
         )
 
         # Load existing state if available
@@ -116,7 +117,9 @@ class ContextSync:
             self._update_from_holistic(holistic_context)
 
         # Measure coherence
-        coherence = self._measure_context_coherence(analytical_context, holistic_context)
+        coherence = self._measure_context_coherence(
+            analytical_context, holistic_context
+        )
         self.shared_context.coherence_level = coherence
 
         # Check if reconciliation needed
@@ -131,12 +134,14 @@ class ContextSync:
         self._save_state()
 
         # Record sync
-        self.sync_history.append({
-            'timestamp': now,
-            'coherence': coherence,
-            'analytical_present': analytical_context is not None,
-            'holistic_present': holistic_context is not None,
-        })
+        self.sync_history.append(
+            {
+                "timestamp": now,
+                "coherence": coherence,
+                "analytical_present": analytical_context is not None,
+                "holistic_present": holistic_context is not None,
+            }
+        )
 
         return self.shared_context
 
@@ -147,10 +152,12 @@ class ContextSync:
         Returns enriched context from holistic perspective.
         """
         return {
-            'shared_state': self.shared_context.to_dict(),
-            'consciousness_state': self.shared_context.consciousness_state,
-            'coherence_level': self.shared_context.coherence_level,
-            'holistic_patterns': self.shared_context.active_patterns.get('holistic', {}),
+            "shared_state": self.shared_context.to_dict(),
+            "consciousness_state": self.shared_context.consciousness_state,
+            "coherence_level": self.shared_context.coherence_level,
+            "holistic_patterns": self.shared_context.active_patterns.get(
+                "holistic", {}
+            ),
         }
 
     def get_context_for_holistic(self) -> Dict:
@@ -160,10 +167,12 @@ class ContextSync:
         Returns grounded context from analytical perspective.
         """
         return {
-            'shared_state': self.shared_context.to_dict(),
-            'market_state': self.shared_context.market_state,
-            'coherence_level': self.shared_context.coherence_level,
-            'analytical_patterns': self.shared_context.active_patterns.get('analytical', {}),
+            "shared_state": self.shared_context.to_dict(),
+            "market_state": self.shared_context.market_state,
+            "coherence_level": self.shared_context.coherence_level,
+            "analytical_patterns": self.shared_context.active_patterns.get(
+                "analytical", {}
+            ),
         }
 
     def maintain_coherence(self) -> bool:
@@ -186,11 +195,7 @@ class ContextSync:
 
         return True
 
-    def detect_drift(
-        self,
-        analytical_context: Dict,
-        holistic_context: Dict
-    ) -> float:
+    def detect_drift(self, analytical_context: Dict, holistic_context: Dict) -> float:
         """
         Detect drift between hemisphere contexts.
 
@@ -201,33 +206,33 @@ class ContextSync:
 
         # Market state vs consciousness state alignment
         market_to_consciousness = {
-            'bullish': 'expanding',
-            'bearish': 'contracting',
-            'neutral': 'stable',
-            'volatile': 'transforming',
+            "bullish": "expanding",
+            "bearish": "contracting",
+            "neutral": "stable",
+            "volatile": "transforming",
         }
 
         expected_consciousness = market_to_consciousness.get(
-            analytical_context.get('market_state', 'neutral'),
-            'stable'
+            analytical_context.get("market_state", "neutral"), "stable"
         )
-        actual_consciousness = holistic_context.get('consciousness_state', 'stable')
+        actual_consciousness = holistic_context.get("consciousness_state", "stable")
 
         state_drift = 0.0 if expected_consciousness == actual_consciousness else 1.0
         drift_factors.append(state_drift)
 
         # Pattern count divergence
-        analytical_pattern_count = len(analytical_context.get('patterns', []))
-        holistic_pattern_count = len(holistic_context.get('patterns', []))
+        analytical_pattern_count = len(analytical_context.get("patterns", []))
+        holistic_pattern_count = len(holistic_context.get("patterns", []))
 
         if analytical_pattern_count + holistic_pattern_count > 0:
-            count_drift = abs(analytical_pattern_count - holistic_pattern_count) / \
-                         (analytical_pattern_count + holistic_pattern_count)
+            count_drift = abs(analytical_pattern_count - holistic_pattern_count) / (
+                analytical_pattern_count + holistic_pattern_count
+            )
             drift_factors.append(count_drift)
 
         # Temporal drift
-        analytical_time = analytical_context.get('timestamp', datetime.now())
-        holistic_time = holistic_context.get('timestamp', datetime.now())
+        analytical_time = analytical_context.get("timestamp", datetime.now())
+        holistic_time = holistic_context.get("timestamp", datetime.now())
 
         if isinstance(analytical_time, str):
             analytical_time = datetime.fromisoformat(analytical_time)
@@ -243,55 +248,53 @@ class ContextSync:
 
     def _update_from_analytical(self, context: Dict):
         """Update shared context from analytical processing."""
-        if 'market_state' in context:
-            self.shared_context.market_state = context['market_state']
+        if "market_state" in context:
+            self.shared_context.market_state = context["market_state"]
 
-        if 'patterns' in context:
-            if 'analytical' not in self.shared_context.active_patterns:
-                self.shared_context.active_patterns['analytical'] = {}
-            self.shared_context.active_patterns['analytical'] = context['patterns']
+        if "patterns" in context:
+            if "analytical" not in self.shared_context.active_patterns:
+                self.shared_context.active_patterns["analytical"] = {}
+            self.shared_context.active_patterns["analytical"] = context["patterns"]
 
-        if 'metadata' in context:
-            self.shared_context.metadata.update(context['metadata'])
+        if "metadata" in context:
+            self.shared_context.metadata.update(context["metadata"])
 
     def _update_from_holistic(self, context: Dict):
         """Update shared context from holistic processing."""
-        if 'consciousness_state' in context:
-            self.shared_context.consciousness_state = context['consciousness_state']
+        if "consciousness_state" in context:
+            self.shared_context.consciousness_state = context["consciousness_state"]
 
-        if 'patterns' in context:
-            if 'holistic' not in self.shared_context.active_patterns:
-                self.shared_context.active_patterns['holistic'] = {}
-            self.shared_context.active_patterns['holistic'] = context['patterns']
+        if "patterns" in context:
+            if "holistic" not in self.shared_context.active_patterns:
+                self.shared_context.active_patterns["holistic"] = {}
+            self.shared_context.active_patterns["holistic"] = context["patterns"]
 
-        if 'metadata' in context:
-            self.shared_context.metadata.update(context['metadata'])
+        if "metadata" in context:
+            self.shared_context.metadata.update(context["metadata"])
 
     def _measure_context_coherence(
-        self,
-        analytical: Optional[Dict],
-        holistic: Optional[Dict]
+        self, analytical: Optional[Dict], holistic: Optional[Dict]
     ) -> float:
         """Measure coherence between contexts."""
         if not analytical or not holistic:
             return 1.0  # No conflict if only one side
 
         # Check state alignment
-        market_state = analytical.get('market_state', 'neutral')
-        consciousness_state = holistic.get('consciousness_state', 'stable')
+        market_state = analytical.get("market_state", "neutral")
+        consciousness_state = holistic.get("consciousness_state", "stable")
 
         state_mapping = {
-            ('bullish', 'expanding'): 1.0,
-            ('bearish', 'contracting'): 1.0,
-            ('neutral', 'stable'): 1.0,
-            ('volatile', 'transforming'): 1.0,
+            ("bullish", "expanding"): 1.0,
+            ("bearish", "contracting"): 1.0,
+            ("neutral", "stable"): 1.0,
+            ("volatile", "transforming"): 1.0,
         }
 
         state_coherence = state_mapping.get((market_state, consciousness_state), 0.5)
 
         # Check temporal alignment
-        analytical_time = analytical.get('timestamp', datetime.now())
-        holistic_time = holistic.get('timestamp', datetime.now())
+        analytical_time = analytical.get("timestamp", datetime.now())
+        holistic_time = holistic.get("timestamp", datetime.now())
 
         if isinstance(analytical_time, str):
             analytical_time = datetime.fromisoformat(analytical_time)
@@ -306,35 +309,33 @@ class ContextSync:
 
         return coherence
 
-    def _reconcile_contexts(
-        self,
-        analytical: Optional[Dict],
-        holistic: Optional[Dict]
-    ):
+    def _reconcile_contexts(self, analytical: Optional[Dict], holistic: Optional[Dict]):
         """Reconcile conflicting contexts."""
         # If coherence is low, attempt to find common ground
 
         if analytical and holistic:
             # Use analytical for precise state
-            if 'market_state' in analytical:
-                self.shared_context.market_state = analytical['market_state']
+            if "market_state" in analytical:
+                self.shared_context.market_state = analytical["market_state"]
 
             # Use holistic for emergent state
-            if 'consciousness_state' in holistic:
-                self.shared_context.consciousness_state = holistic['consciousness_state']
+            if "consciousness_state" in holistic:
+                self.shared_context.consciousness_state = holistic[
+                    "consciousness_state"
+                ]
 
             # Merge metadata
             self.shared_context.metadata = {
-                **analytical.get('metadata', {}),
-                **holistic.get('metadata', {}),
-                'reconciliation_time': datetime.now().isoformat(),
-                'reconciliation_reason': 'low_coherence',
+                **analytical.get("metadata", {}),
+                **holistic.get("metadata", {}),
+                "reconciliation_time": datetime.now().isoformat(),
+                "reconciliation_reason": "low_coherence",
             }
 
     def _save_state(self):
         """Save shared context to file."""
         try:
-            with open(self.state_file, 'w') as f:
+            with open(self.state_file, "w") as f:
                 json.dump(self.shared_context.to_dict(), f, indent=2)
         except Exception as e:
             print(f"Warning: Could not save state: {e}")
@@ -343,7 +344,7 @@ class ContextSync:
         """Load shared context from file."""
         try:
             if self.state_file.exists():
-                with open(self.state_file, 'r') as f:
+                with open(self.state_file, "r") as f:
                     data = json.load(f)
                     self.shared_context = SharedContext.from_dict(data)
         except Exception as e:
@@ -352,19 +353,21 @@ class ContextSync:
     def get_sync_stats(self) -> Dict:
         """Get synchronization statistics."""
         if not self.sync_history:
-            return {'count': 0}
+            return {"count": 0}
 
         total = len(self.sync_history)
-        avg_coherence = sum(s['coherence'] for s in self.sync_history) / total
-        low_coherence_count = sum(1 for s in self.sync_history if s['coherence'] < self.coherence_threshold)
+        avg_coherence = sum(s["coherence"] for s in self.sync_history) / total
+        low_coherence_count = sum(
+            1 for s in self.sync_history if s["coherence"] < self.coherence_threshold
+        )
 
         return {
-            'total_syncs': total,
-            'avg_coherence': avg_coherence,
-            'current_coherence': self.shared_context.coherence_level,
-            'low_coherence_events': low_coherence_count,
-            'last_sync': self.last_sync.isoformat(),
-            'time_since_sync': (datetime.now() - self.last_sync).total_seconds(),
+            "total_syncs": total,
+            "avg_coherence": avg_coherence,
+            "current_coherence": self.shared_context.coherence_level,
+            "low_coherence_events": low_coherence_count,
+            "last_sync": self.last_sync.isoformat(),
+            "time_since_sync": (datetime.now() - self.last_sync).total_seconds(),
         }
 
 
@@ -375,18 +378,18 @@ if __name__ == "__main__":
 
     # Simulate analytical context
     analytical_context = {
-        'market_state': 'bullish',
-        'timestamp': datetime.now(),
-        'patterns': ['RSI Oversold', 'MACD Bullish'],
-        'metadata': {'source': 'analytical'},
+        "market_state": "bullish",
+        "timestamp": datetime.now(),
+        "patterns": ["RSI Oversold", "MACD Bullish"],
+        "metadata": {"source": "analytical"},
     }
 
     # Simulate holistic context
     holistic_context = {
-        'consciousness_state': 'expanding',
-        'timestamp': datetime.now(),
-        'patterns': ['Awareness Ascending', 'Integration Phase'],
-        'metadata': {'source': 'holistic'},
+        "consciousness_state": "expanding",
+        "timestamp": datetime.now(),
+        "patterns": ["Awareness Ascending", "Integration Phase"],
+        "metadata": {"source": "holistic"},
     }
 
     # Sync

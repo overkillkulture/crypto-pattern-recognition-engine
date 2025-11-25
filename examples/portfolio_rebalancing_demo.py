@@ -11,15 +11,15 @@ Demonstrates multi-asset portfolio management with automatic rebalancing:
 
 import asyncio
 import sys
-import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict
 
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
+import numpy as np
 
-from src.trading.simulator import TradingSimulator, OrderSide
-from src.trading.portfolio import Portfolio
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
+
 from src.core.types import OHLCV
+from src.trading.portfolio import Portfolio
+from src.trading.simulator import OrderSide, TradingSimulator
 
 
 def generate_multi_asset_data(days=180, symbols=None):
@@ -32,16 +32,18 @@ def generate_multi_asset_data(days=180, symbols=None):
         symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]
 
     periods = days * 24  # Hourly data
-    timestamps = np.array([
-        (datetime.now() - timedelta(hours=periods-i)).timestamp()
-        for i in range(periods)
-    ])
+    timestamps = np.array(
+        [
+            (datetime.now() - timedelta(hours=periods - i)).timestamp()
+            for i in range(periods)
+        ]
+    )
 
     asset_data = {}
 
     # BTC: Lower volatility, steady growth
     btc_drift = 0.00015  # ~0.36% daily
-    btc_vol = 0.0015     # ~3.6% daily volatility
+    btc_vol = 0.0015  # ~3.6% daily volatility
     btc_returns = btc_drift + np.random.randn(periods) * btc_vol
     btc_prices = 50000 * np.cumprod(1 + btc_returns)
 
@@ -49,7 +51,7 @@ def generate_multi_asset_data(days=180, symbols=None):
 
     # ETH: Medium volatility, higher growth
     eth_drift = 0.00020  # ~0.48% daily
-    eth_vol = 0.0020     # ~4.8% daily volatility
+    eth_vol = 0.0020  # ~4.8% daily volatility
     eth_returns = eth_drift + np.random.randn(periods) * eth_vol
     eth_prices = 3000 * np.cumprod(1 + eth_returns)
 
@@ -57,7 +59,7 @@ def generate_multi_asset_data(days=180, symbols=None):
 
     # SOL: High volatility, highest growth potential
     sol_drift = 0.00025  # ~0.6% daily
-    sol_vol = 0.0030     # ~7.2% daily volatility
+    sol_vol = 0.0030  # ~7.2% daily volatility
     sol_returns = sol_drift + np.random.randn(periods) * sol_vol
     sol_prices = 100 * np.cumprod(1 + sol_returns)
 
@@ -91,9 +93,9 @@ def create_ohlcv(timestamps, prices):
 async def run_portfolio_demo():
     """Run portfolio rebalancing demonstration."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📊 PORTFOLIO REBALANCING DEMONSTRATION")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Configuration
     initial_capital = 100000
@@ -116,14 +118,18 @@ async def run_portfolio_demo():
         start_price = data.close[0]
         end_price = data.close[-1]
         return_pct = ((end_price / start_price) - 1) * 100
-        print(f"  {symbol:12s} ${start_price:>8,.2f} → ${end_price:>8,.2f} ({return_pct:>+7.1f}%)")
+        print(
+            f"  {symbol:12s} ${start_price:>8,.2f} → ${end_price:>8,.2f} ({return_pct:>+7.1f}%)"
+        )
 
     print()
 
     # Setup portfolio with rebalancing
     print("Portfolio Configuration:")
     print(f"  Initial Capital: ${initial_capital:,}")
-    print(f"  Rebalancing: Every {rebalance_days} days (if drift > {rebalance_threshold}%)")
+    print(
+        f"  Rebalancing: Every {rebalance_days} days (if drift > {rebalance_threshold}%)"
+    )
     print(f"  Target Allocation:")
     for symbol, pct in target_allocation.items():
         print(f"    {symbol:12s} {pct:>5.1f}%")
@@ -149,9 +155,9 @@ async def run_portfolio_demo():
         )
         buyhold_sims[symbol] = sim
 
-    print("="*80)
+    print("=" * 80)
     print("RUNNING SIMULATION...")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Track rebalancing events
     rebalance_events = []
@@ -162,10 +168,7 @@ async def run_portfolio_demo():
 
     for i in range(1, periods):
         # Get current prices
-        current_prices = {
-            symbol: asset_data[symbol].close[i]
-            for symbol in symbols
-        }
+        current_prices = {symbol: asset_data[symbol].close[i] for symbol in symbols}
 
         # Update rebalanced portfolio
         rebalanced_sim.update_prices(current_prices)
@@ -178,14 +181,20 @@ async def run_portfolio_demo():
             for symbol in symbols:
                 initial_amount = initial_capital / len(symbols)
                 price = current_prices[symbol]
-                quantity = (initial_amount * 0.998) / (price * 1.002)  # Account for fees
-                buyhold_sims[symbol].market_order(symbol, OrderSide.BUY, quantity, price)
+                quantity = (initial_amount * 0.998) / (
+                    price * 1.002
+                )  # Account for fees
+                buyhold_sims[symbol].market_order(
+                    symbol, OrderSide.BUY, quantity, price
+                )
 
             print(f"📅 Day 1: Initial allocation")
-            print(f"   Portfolio value: ${rebalanced_portfolio.simulator.get_equity():,.2f}\n")
+            print(
+                f"   Portfolio value: ${rebalanced_portfolio.simulator.get_equity():,.2f}\n"
+            )
 
         # Check for rebalancing (monthly)
-        hours_since_rebalance = (i - last_rebalance_idx)
+        hours_since_rebalance = i - last_rebalance_idx
         days_since_rebalance = hours_since_rebalance / 24
 
         if days_since_rebalance >= rebalance_days:
@@ -194,15 +203,19 @@ async def run_portfolio_demo():
                 trades = rebalanced_portfolio.rebalance(current_prices)
 
                 current_day = i // 24
-                rebalance_events.append({
-                    'day': current_day,
-                    'equity': rebalanced_portfolio.simulator.get_equity(),
-                    'trades': len(trades),
-                })
+                rebalance_events.append(
+                    {
+                        "day": current_day,
+                        "equity": rebalanced_portfolio.simulator.get_equity(),
+                        "trades": len(trades),
+                    }
+                )
 
                 print(f"🔄 Day {current_day}: Rebalancing triggered")
                 print(f"   Executed {len(trades)} trades")
-                print(f"   Portfolio value: ${rebalanced_portfolio.simulator.get_equity():,.2f}")
+                print(
+                    f"   Portfolio value: ${rebalanced_portfolio.simulator.get_equity():,.2f}"
+                )
 
                 # Show drift
                 current_alloc = rebalanced_portfolio.get_current_allocation()
@@ -223,9 +236,9 @@ async def run_portfolio_demo():
             buyhold_sims[symbol].update_prices({symbol: current_prices[symbol]})
 
     # Final results
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SIMULATION RESULTS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Rebalanced portfolio stats
     rebalanced_equity = rebalanced_portfolio.simulator.get_equity()
@@ -245,7 +258,9 @@ async def run_portfolio_demo():
         current_pct = final_alloc.get(symbol, 0)
         target_pct = target_allocation[symbol]
         drift = current_pct - target_pct
-        print(f"    {symbol:12s} {current_pct:>5.1f}% (target: {target_pct:.1f}%, drift: {drift:+.1f}%)")
+        print(
+            f"    {symbol:12s} {current_pct:>5.1f}% (target: {target_pct:.1f}%, drift: {drift:+.1f}%)"
+        )
     print()
 
     # Buy & hold comparison
@@ -272,9 +287,9 @@ async def run_portfolio_demo():
     print()
 
     # Performance comparison
-    print("="*80)
+    print("=" * 80)
     print("PERFORMANCE ANALYSIS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     strategies = [
         ("Rebalanced Portfolio", rebalanced_return, rebalanced_equity),
@@ -285,7 +300,7 @@ async def run_portfolio_demo():
     for symbol in symbols:
         data = asset_data[symbol]
         asset_return = ((data.close[-1] / data.close[1]) - 1) * 100
-        asset_final = initial_capital * (1 + asset_return/100)
+        asset_final = initial_capital * (1 + asset_return / 100)
         strategies.append((f"{symbol} Only", asset_return, asset_final))
 
     # Sort by return
@@ -295,34 +310,40 @@ async def run_portfolio_demo():
     print("-" * 60)
 
     for rank, (name, ret, equity) in enumerate(strategies, 1):
-        medal = "🥇" if rank == 1 else "🥈" if rank == 2 else "🥉" if rank == 3 else "  "
+        medal = (
+            "🥇" if rank == 1 else "🥈" if rank == 2 else "🥉" if rank == 3 else "  "
+        )
         print(f"{medal} {name:<27} {ret:>+10.2f}% ${equity:>13,.2f}")
 
     print()
 
     # Rebalancing statistics
     if rebalance_events:
-        print("="*80)
+        print("=" * 80)
         print("REBALANCING STATISTICS")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
         print(f"Total Rebalancing Events: {len(rebalance_events)}")
-        print(f"Average Days Between Rebalances: {180 / (len(rebalance_events) + 1):.1f}")
+        print(
+            f"Average Days Between Rebalances: {180 / (len(rebalance_events) + 1):.1f}"
+        )
         print()
 
         print("Rebalancing History:")
         for event in rebalance_events:
-            print(f"  Day {event['day']:>3}: {event['trades']} trades, "
-                  f"Portfolio: ${event['equity']:,.2f}")
+            print(
+                f"  Day {event['day']:>3}: {event['trades']} trades, "
+                f"Portfolio: ${event['equity']:,.2f}"
+            )
         print()
 
     # Cost analysis
     rebalance_fees = rebalanced_portfolio.simulator.total_fees_paid
     buyhold_fees = sum(sim.total_fees_paid for sim in buyhold_sims.values())
 
-    print("="*80)
+    print("=" * 80)
     print("COST ANALYSIS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     print(f"Transaction Costs:")
     print(f"  Rebalanced Portfolio: ${rebalance_fees:,.2f}")
@@ -336,9 +357,9 @@ async def run_portfolio_demo():
     print()
 
     # Risk analysis
-    print("="*80)
+    print("=" * 80)
     print("RISK CONSIDERATIONS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     print("✅ Benefits of Rebalancing:")
     print("  • Maintains target risk/return profile")
@@ -355,9 +376,9 @@ async def run_portfolio_demo():
     print()
 
     # Recommendations
-    print("="*80)
+    print("=" * 80)
     print("KEY TAKEAWAYS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     if rebalanced_return > buyhold_return:
         print("✅ Rebalancing outperformed buy & hold in this scenario")
@@ -391,6 +412,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

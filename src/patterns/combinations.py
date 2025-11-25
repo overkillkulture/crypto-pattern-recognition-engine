@@ -1,11 +1,11 @@
 """Pattern combination strategies for stronger signals."""
 
-from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 
-from src.core.types import PatternResult, SignalType, PatternType
+from src.core.types import PatternResult, PatternType, SignalType
 
 
 @dataclass
@@ -81,7 +81,9 @@ class ConsensusStrategy(PatternCombinationStrategy):
         # Count votes
         buy_votes = [p for p in confident_patterns if p.signal == SignalType.BUY]
         sell_votes = [p for p in confident_patterns if p.signal == SignalType.SELL]
-        neutral_votes = [p for p in confident_patterns if p.signal == SignalType.NEUTRAL]
+        neutral_votes = [
+            p for p in confident_patterns if p.signal == SignalType.NEUTRAL
+        ]
 
         total_votes = len(confident_patterns)
 
@@ -100,10 +102,10 @@ class ConsensusStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"{len(buy_votes)}/{total_votes} patterns ({buy_ratio:.1%}) agree on BUY",
                 metadata={
-                    'buy_votes': len(buy_votes),
-                    'sell_votes': len(sell_votes),
-                    'neutral_votes': len(neutral_votes),
-                    'consensus_ratio': buy_ratio,
+                    "buy_votes": len(buy_votes),
+                    "sell_votes": len(sell_votes),
+                    "neutral_votes": len(neutral_votes),
+                    "consensus_ratio": buy_ratio,
                 },
             )
 
@@ -117,10 +119,10 @@ class ConsensusStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"{len(sell_votes)}/{total_votes} patterns ({sell_ratio:.1%}) agree on SELL",
                 metadata={
-                    'buy_votes': len(buy_votes),
-                    'sell_votes': len(sell_votes),
-                    'neutral_votes': len(neutral_votes),
-                    'consensus_ratio': sell_ratio,
+                    "buy_votes": len(buy_votes),
+                    "sell_votes": len(sell_votes),
+                    "neutral_votes": len(neutral_votes),
+                    "consensus_ratio": sell_ratio,
                 },
             )
 
@@ -179,9 +181,7 @@ class WeightedStrategy(PatternCombinationStrategy):
                 sell_patterns.append(pattern)
 
         # Normalize scores
-        total_weight = sum(
-            self.weights.get(p.pattern_type, 1.0) for p in patterns
-        )
+        total_weight = sum(self.weights.get(p.pattern_type, 1.0) for p in patterns)
 
         if total_weight > 0:
             buy_score /= total_weight
@@ -196,9 +196,9 @@ class WeightedStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"Weighted BUY score: {buy_score:.2f} > threshold {self.min_score:.2f}",
                 metadata={
-                    'buy_score': buy_score,
-                    'sell_score': sell_score,
-                    'total_patterns': len(patterns),
+                    "buy_score": buy_score,
+                    "sell_score": sell_score,
+                    "total_patterns": len(patterns),
                 },
             )
 
@@ -210,9 +210,9 @@ class WeightedStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"Weighted SELL score: {sell_score:.2f} > threshold {self.min_score:.2f}",
                 metadata={
-                    'buy_score': buy_score,
-                    'sell_score': sell_score,
-                    'total_patterns': len(patterns),
+                    "buy_score": buy_score,
+                    "sell_score": sell_score,
+                    "total_patterns": len(patterns),
                 },
             )
 
@@ -288,8 +288,10 @@ class ConfirmationStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"All required pattern types confirm BUY: {[t.value for t in self.required_types]}",
                 metadata={
-                    'required_types': [t.value for t in self.required_types],
-                    'patterns_per_type': {t.value: len(by_type[t]) for t in self.required_types},
+                    "required_types": [t.value for t in self.required_types],
+                    "patterns_per_type": {
+                        t.value: len(by_type[t]) for t in self.required_types
+                    },
                 },
             )
 
@@ -310,8 +312,10 @@ class ConfirmationStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"All required pattern types confirm SELL: {[t.value for t in self.required_types]}",
                 metadata={
-                    'required_types': [t.value for t in self.required_types],
-                    'patterns_per_type': {t.value: len(by_type[t]) for t in self.required_types},
+                    "required_types": [t.value for t in self.required_types],
+                    "patterns_per_type": {
+                        t.value: len(by_type[t]) for t in self.required_types
+                    },
                 },
             )
 
@@ -388,8 +392,8 @@ class TimeframeConfluenceStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"BUY signal confirmed across {len(buy_timeframes)} timeframes: {buy_timeframes}",
                 metadata={
-                    'aligned_timeframes': buy_timeframes,
-                    'total_timeframes': len(by_timeframe),
+                    "aligned_timeframes": buy_timeframes,
+                    "total_timeframes": len(by_timeframe),
                 },
             )
 
@@ -409,8 +413,8 @@ class TimeframeConfluenceStrategy(PatternCombinationStrategy):
                 strategy_name=self.name,
                 reasoning=f"SELL signal confirmed across {len(sell_timeframes)} timeframes: {sell_timeframes}",
                 metadata={
-                    'aligned_timeframes': sell_timeframes,
-                    'total_timeframes': len(by_timeframe),
+                    "aligned_timeframes": sell_timeframes,
+                    "total_timeframes": len(by_timeframe),
                 },
             )
 
@@ -459,6 +463,7 @@ class PatternCombiner:
             except Exception as e:
                 # Log but don't fail entire combination
                 import logging
+
                 logging.error(f"Strategy {strategy.name} failed: {e}")
 
         return signals
@@ -514,8 +519,8 @@ class PatternCombiner:
                 strategy_name="Meta Consensus",
                 reasoning=f"{len(buy_signals)}/{len(signals)} strategies agree on BUY",
                 metadata={
-                    'agreeing_strategies': [s.strategy_name for s in buy_signals],
-                    'total_strategies': len(signals),
+                    "agreeing_strategies": [s.strategy_name for s in buy_signals],
+                    "total_strategies": len(signals),
                 },
             )
 
@@ -533,8 +538,8 @@ class PatternCombiner:
                 strategy_name="Meta Consensus",
                 reasoning=f"{len(sell_signals)}/{len(signals)} strategies agree on SELL",
                 metadata={
-                    'agreeing_strategies': [s.strategy_name for s in sell_signals],
-                    'total_strategies': len(signals),
+                    "agreeing_strategies": [s.strategy_name for s in sell_signals],
+                    "total_strategies": len(signals),
                 },
             )
 

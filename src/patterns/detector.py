@@ -1,10 +1,10 @@
 """Pattern detector implementations."""
 
 from typing import List
-from datetime import datetime
+
 from loguru import logger
 
-from src.core.interfaces import PatternDetector, Pattern
+from src.core.interfaces import Pattern, PatternDetector
 from src.core.types import OHLCV, PatternResult, Timeframe
 
 

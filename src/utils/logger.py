@@ -2,8 +2,9 @@
 
 import sys
 from pathlib import Path
+from typing import Any, Dict
+
 from loguru import logger
-from typing import Dict, Any
 
 
 def setup_logger(config: Dict[str, Any]) -> None:
@@ -17,13 +18,13 @@ def setup_logger(config: Dict[str, Any]) -> None:
     logger.remove()
 
     # Get logging config
-    log_config = config.get('logging', {})
-    level = log_config.get('level', 'INFO')
-    format_type = log_config.get('format', 'text')
-    outputs = log_config.get('output', ['console'])
+    log_config = config.get("logging", {})
+    level = log_config.get("level", "INFO")
+    format_type = log_config.get("format", "text")
+    outputs = log_config.get("output", ["console"])
 
     # Define format
-    if format_type == 'json':
+    if format_type == "json":
         log_format = (
             "{{"
             '"timestamp": "{time:YYYY-MM-DD HH:mm:ss.SSS}", '
@@ -43,20 +44,20 @@ def setup_logger(config: Dict[str, Any]) -> None:
         )
 
     # Add console handler
-    if 'console' in outputs:
+    if "console" in outputs:
         logger.add(
             sys.stderr,
             format=log_format,
             level=level,
-            colorize=format_type != 'json',
+            colorize=format_type != "json",
         )
 
     # Add file handler
-    if 'file' in outputs:
-        file_config = log_config.get('file', {})
-        log_path = file_config.get('path', 'logs/engine.log')
-        rotation = file_config.get('rotation', '100 MB')
-        retention = file_config.get('retention', '30 days')
+    if "file" in outputs:
+        file_config = log_config.get("file", {})
+        log_path = file_config.get("path", "logs/engine.log")
+        rotation = file_config.get("rotation", "100 MB")
+        retention = file_config.get("retention", "30 days")
 
         # Create log directory
         Path(log_path).parent.mkdir(parents=True, exist_ok=True)

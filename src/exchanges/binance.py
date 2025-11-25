@@ -13,21 +13,22 @@ Features:
 import asyncio
 import time
 from collections import deque
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable, Any, Tuple
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
-import numpy as np
+from typing import Any, Callable, Dict, List, Optional
 
 import ccxt.async_support as ccxt
+import numpy as np
 from loguru import logger
 
 from src.core.types import OHLCV, Timeframe
-from src.streaming.websocket import WebSocketClient, BinanceWebSocketHandler
+from src.streaming.websocket import BinanceWebSocketHandler, WebSocketClient
 
 
 class BinanceMarket(str, Enum):
     """Binance market types."""
+
     SPOT = "spot"
     FUTURES_USD_M = "futures_usd_m"  # USDT-Margined Futures
     FUTURES_COIN_M = "futures_coin_m"  # Coin-Margined Futures
@@ -37,19 +38,21 @@ class BinanceMarket(str, Enum):
 @dataclass
 class RateLimitConfig:
     """Rate limiting configuration."""
+
     requests_per_minute: int = 1200  # Binance default: 1200/min
-    weight_per_minute: int = 6000     # Weight-based limit
-    orders_per_second: int = 10       # Order rate limit
-    orders_per_day: int = 200000      # Daily order limit
+    weight_per_minute: int = 6000  # Weight-based limit
+    orders_per_second: int = 10  # Order rate limit
+    orders_per_day: int = 200000  # Daily order limit
 
 
 @dataclass
 class RetryConfig:
     """Retry configuration for failed requests."""
+
     max_retries: int = 4
-    base_delay: float = 1.0           # Initial delay in seconds
-    max_delay: float = 32.0           # Maximum delay
-    exponential_base: float = 2.0     # Exponential backoff multiplier
+    base_delay: float = 1.0  # Initial delay in seconds
+    max_delay: float = 32.0  # Maximum delay
+    exponential_base: float = 2.0  # Exponential backoff multiplier
 
 
 class RateLimiter:
@@ -176,42 +179,42 @@ class BinanceConnector:
 
         # Statistics
         self.stats = {
-            'requests_sent': 0,
-            'requests_failed': 0,
-            'retries_performed': 0,
-            'rate_limits_hit': 0,
-            'websocket_reconnects': 0,
+            "requests_sent": 0,
+            "requests_failed": 0,
+            "retries_performed": 0,
+            "rate_limits_hit": 0,
+            "websocket_reconnects": 0,
         }
 
-        logger.info(f"Initialized BinanceConnector (market={market}, testnet={testnet})")
+        logger.info(
+            f"Initialized BinanceConnector (market={market}, testnet={testnet})"
+        )
 
-    def _create_exchange(self, api_key: Optional[str], api_secret: Optional[str]) -> ccxt.Exchange:
+    def _create_exchange(
+        self, api_key: Optional[str], api_secret: Optional[str]
+    ) -> ccxt.Exchange:
         """Create CCXT exchange instance."""
         config = {
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': False,  # We handle rate limiting ourselves
-            'options': {
-                'defaultType': self.market.value,
-            }
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": False,  # We handle rate limiting ourselves
+            "options": {
+                "defaultType": self.market.value,
+            },
         }
 
         if self.testnet:
-            config['urls'] = {
-                'api': {
-                    'public': 'https://testnet.binance.vision/api',
-                    'private': 'https://testnet.binance.vision/api',
+            config["urls"] = {
+                "api": {
+                    "public": "https://testnet.binance.vision/api",
+                    "private": "https://testnet.binance.vision/api",
                 }
             }
 
         return ccxt.binance(config)
 
     async def _request_with_retry(
-        self,
-        func: Callable,
-        *args,
-        weight: int = 1,
-        **kwargs
+        self, func: Callable, *args, weight: int = 1, **kwargs
     ) -> Any:
         """
         Execute request with rate limiting and exponential backoff retry.
@@ -231,43 +234,46 @@ class BinanceConnector:
 
                 # Execute request
                 result = await func(*args, **kwargs)
-                self.stats['requests_sent'] += 1
+                self.stats["requests_sent"] += 1
 
                 return result
 
             except ccxt.RateLimitExceeded as e:
-                self.stats['rate_limits_hit'] += 1
+                self.stats["rate_limits_hit"] += 1
                 logger.warning(f"Rate limit exceeded: {e}")
 
                 # Wait longer for rate limit errors
                 delay = min(
-                    self.retry_config.base_delay * (2 ** attempt),
-                    self.retry_config.max_delay
+                    self.retry_config.base_delay * (2**attempt),
+                    self.retry_config.max_delay,
                 )
                 logger.info(f"Waiting {delay}s before retry (rate limit)")
                 await asyncio.sleep(delay)
 
             except (ccxt.NetworkError, ccxt.ExchangeError) as e:
-                self.stats['requests_failed'] += 1
+                self.stats["requests_failed"] += 1
 
                 if attempt >= self.retry_config.max_retries:
                     logger.error(f"Max retries exceeded: {e}")
                     raise
 
-                self.stats['retries_performed'] += 1
+                self.stats["retries_performed"] += 1
 
                 # Exponential backoff
                 delay = min(
-                    self.retry_config.base_delay * (self.retry_config.exponential_base ** attempt),
-                    self.retry_config.max_delay
+                    self.retry_config.base_delay
+                    * (self.retry_config.exponential_base**attempt),
+                    self.retry_config.max_delay,
                 )
 
-                logger.warning(f"Request failed (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                logger.warning(
+                    f"Request failed (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 logger.info(f"Retrying in {delay:.2f}s...")
                 await asyncio.sleep(delay)
 
             except Exception as e:
-                self.stats['requests_failed'] += 1
+                self.stats["requests_failed"] += 1
                 logger.error(f"Unexpected error: {e}")
                 raise
 
@@ -383,7 +389,9 @@ class BinanceConnector:
         total_duration = until - since
         expected_candles = int(total_duration / candle_duration)
 
-        logger.info(f"Fetching {expected_candles} candles for {symbol} {timeframe} from {since} to {until}")
+        logger.info(
+            f"Fetching {expected_candles} candles for {symbol} {timeframe} from {since} to {until}"
+        )
 
         # Fetch in chunks
         all_data = []
@@ -403,7 +411,9 @@ class BinanceConnector:
             )
 
             if len(ohlcv) == 0:
-                logger.warning(f"No data returned for chunk starting at {current_since}")
+                logger.warning(
+                    f"No data returned for chunk starting at {current_since}"
+                )
                 break
 
             # Filter data within range
@@ -424,7 +434,9 @@ class BinanceConnector:
             if progress_callback:
                 progress_callback(fetched_count, expected_candles)
 
-            logger.debug(f"Chunk {chunk_num}: {len(filtered_ohlcv)} candles (total: {fetched_count})")
+            logger.debug(
+                f"Chunk {chunk_num}: {len(filtered_ohlcv)} candles (total: {fetched_count})"
+            )
 
             # Update cursor
             if len(ohlcv) < chunk_size:
@@ -490,7 +502,7 @@ class BinanceConnector:
             weight=1,
         )
 
-        return ticker['last']
+        return ticker["last"]
 
     async def get_24h_stats(self, symbol: str) -> Dict[str, Any]:
         """
@@ -509,13 +521,13 @@ class BinanceConnector:
         )
 
         return {
-            'symbol': symbol,
-            'last': ticker['last'],
-            'high': ticker['high'],
-            'low': ticker['low'],
-            'volume': ticker['quoteVolume'],
-            'change_percent': ticker['percentage'],
-            'timestamp': datetime.fromtimestamp(ticker['timestamp'] / 1000),
+            "symbol": symbol,
+            "last": ticker["last"],
+            "high": ticker["high"],
+            "low": ticker["low"],
+            "volume": ticker["quoteVolume"],
+            "change_percent": ticker["percentage"],
+            "timestamp": datetime.fromtimestamp(ticker["timestamp"] / 1000),
         }
 
     async def subscribe_klines(
@@ -536,7 +548,7 @@ class BinanceConnector:
             Subscription ID (for unsubscribing)
         """
         # Convert symbol format
-        binance_symbol = symbol.replace('/', '').lower()
+        binance_symbol = symbol.replace("/", "").lower()
 
         # Build stream name
         stream_name = f"{binance_symbol}@kline_{timeframe.value}"
@@ -575,7 +587,7 @@ class BinanceConnector:
             await client.subscribe(streams)
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
-            self.stats['websocket_reconnects'] += 1
+            self.stats["websocket_reconnects"] += 1
 
     async def unsubscribe(self, subscription_id: str):
         """
@@ -603,9 +615,9 @@ class BinanceConnector:
         )
 
         return {
-            'markets_count': len(info),
-            'markets': info,
-            'rate_limits': self.exchange.rateLimit,
+            "markets_count": len(info),
+            "markets": info,
+            "rate_limits": self.exchange.rateLimit,
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -617,10 +629,11 @@ class BinanceConnector:
         """
         return {
             **self.stats,
-            'success_rate': (
-                (self.stats['requests_sent'] - self.stats['requests_failed'])
-                / max(self.stats['requests_sent'], 1)
-            ) * 100,
+            "success_rate": (
+                (self.stats["requests_sent"] - self.stats["requests_failed"])
+                / max(self.stats["requests_sent"], 1)
+            )
+            * 100,
         }
 
     async def close(self):

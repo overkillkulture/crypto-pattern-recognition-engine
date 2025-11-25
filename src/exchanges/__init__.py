@@ -2,4 +2,4 @@
 
 from src.exchanges.binance import BinanceConnector
 
-__all__ = ['BinanceConnector']
+__all__ = ["BinanceConnector"]

@@ -1,25 +1,15 @@
 """Main pattern recognition engine."""
 
 import asyncio
-from typing import List, Dict, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from loguru import logger
 
-from src.core.interfaces import (
-    PatternDetector,
-    DataProvider,
-    Analyzer,
-    AlertHandler,
-    MLModel,
-)
-from src.core.types import (
-    Exchange,
-    Timeframe,
-    PatternResult,
-    AnalysisResult,
-    Alert,
-    Priority,
-)
+from src.core.interfaces import (AlertHandler, Analyzer, DataProvider, MLModel,
+                                 PatternDetector)
+from src.core.types import (Alert, AnalysisResult, Exchange, PatternResult,
+                            Priority, Timeframe)
 
 
 class PatternRecognitionEngine:
@@ -101,9 +91,11 @@ class PatternRecognitionEngine:
         self.active_timeframes = timeframes
         self.active_exchanges = exchanges
 
-        logger.info(f"Configured: {len(symbols)} symbols, "
-                   f"{len(timeframes)} timeframes, "
-                   f"{len(exchanges)} exchanges")
+        logger.info(
+            f"Configured: {len(symbols)} symbols, "
+            f"{len(timeframes)} timeframes, "
+            f"{len(exchanges)} exchanges"
+        )
 
     async def start(self) -> None:
         """Start the pattern recognition engine."""
@@ -220,7 +212,9 @@ class PatternRecognitionEngine:
 
     async def _process_alerts(self, patterns: List[PatternResult]) -> None:
         """Process patterns and generate alerts."""
-        min_confidence = self.config.get('alerts', {}).get('filters', {}).get('min_confidence', 0.75)
+        min_confidence = (
+            self.config.get("alerts", {}).get("filters", {}).get("min_confidence", 0.75)
+        )
 
         for pattern in patterns:
             if pattern.confidence >= min_confidence:

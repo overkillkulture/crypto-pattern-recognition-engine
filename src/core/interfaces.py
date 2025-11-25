@@ -1,19 +1,11 @@
 """Core interfaces for extensibility."""
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from src.core.types import (
-    MarketData,
-    OHLCV,
-    PatternResult,
-    Alert,
-    Timeframe,
-    Exchange,
-    AnalysisResult,
-    ModelPrediction,
-)
+from src.core.types import (OHLCV, Alert, AnalysisResult, Exchange, ModelPrediction,
+                            PatternResult, Timeframe)
 
 
 class Pattern(ABC):
@@ -35,7 +27,6 @@ class Pattern(ABC):
         Returns:
             List of detected pattern results
         """
-        pass
 
     @abstractmethod
     def validate(self, result: PatternResult) -> bool:
@@ -48,7 +39,6 @@ class Pattern(ABC):
         Returns:
             True if valid, False otherwise
         """
-        pass
 
     def get_metadata(self) -> Dict[str, Any]:
         """Get pattern metadata."""
@@ -84,17 +74,14 @@ class PatternDetector(ABC):
         Returns:
             List of detected patterns
         """
-        pass
 
     @abstractmethod
     def register_pattern(self, pattern: Pattern) -> None:
         """Register a new pattern for detection."""
-        pass
 
     @abstractmethod
     def unregister_pattern(self, pattern_name: str) -> None:
         """Unregister a pattern."""
-        pass
 
 
 class DataProvider(ABC):
@@ -122,7 +109,6 @@ class DataProvider(ABC):
         Returns:
             OHLCV data
         """
-        pass
 
     @abstractmethod
     async def get_latest_price(
@@ -131,7 +117,6 @@ class DataProvider(ABC):
         symbol: str,
     ) -> float:
         """Get latest price for a symbol."""
-        pass
 
     @abstractmethod
     async def subscribe_realtime(
@@ -142,7 +127,6 @@ class DataProvider(ABC):
         callback,
     ) -> None:
         """Subscribe to real-time data updates."""
-        pass
 
 
 class MLModel(ABC):
@@ -171,7 +155,6 @@ class MLModel(ABC):
         Returns:
             Training metrics
         """
-        pass
 
     @abstractmethod
     async def predict(
@@ -189,17 +172,14 @@ class MLModel(ABC):
         Returns:
             Model prediction
         """
-        pass
 
     @abstractmethod
     def save(self, path: str) -> None:
         """Save model to disk."""
-        pass
 
     @abstractmethod
     def load(self, path: str) -> None:
         """Load model from disk."""
-        pass
 
 
 class Analyzer(ABC):
@@ -225,7 +205,6 @@ class Analyzer(ABC):
         Returns:
             Analysis result
         """
-        pass
 
 
 class AlertHandler(ABC):
@@ -242,12 +221,10 @@ class AlertHandler(ABC):
         Returns:
             True if sent successfully
         """
-        pass
 
     @abstractmethod
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure the alert handler."""
-        pass
 
 
 class Strategy(ABC):
@@ -271,12 +248,10 @@ class Strategy(ABC):
         Returns:
             List of trading signals
         """
-        pass
 
     @abstractmethod
     def validate_signal(self, signal: Dict[str, Any]) -> bool:
         """Validate a trading signal."""
-        pass
 
 
 class BacktestEngine(ABC):
@@ -304,4 +279,3 @@ class BacktestEngine(ABC):
         Returns:
             Backtest results
         """
-        pass

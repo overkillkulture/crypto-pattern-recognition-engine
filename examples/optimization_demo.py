@@ -10,18 +10,13 @@ Shows the performance improvements from optimization utilities:
 
 import sys
 import time
+
 import numpy as np
 
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
 
-from src.utils.optimization import (
-    VectorizedIndicators,
-    RollingWindow,
-    StreamingStats,
-    ProfileTimer,
-    MemoryPool,
-    cached_pattern,
-)
+from src.utils.optimization import (ProfileTimer, RollingWindow, StreamingStats,
+                                    VectorizedIndicators, cached_pattern)
 
 
 def generate_prices(n=1000):
@@ -42,16 +37,18 @@ def standard_rsi(prices, period=14):
     avg_gains = []
     avg_losses = []
 
-    for i in range(period-1, len(deltas)):
-        window_gains = gains[max(0, i-period+1):i+1]
-        window_losses = losses[max(0, i-period+1):i+1]
+    for i in range(period - 1, len(deltas)):
+        window_gains = gains[max(0, i - period + 1) : i + 1]
+        window_losses = losses[max(0, i - period + 1) : i + 1]
         avg_gains.append(np.mean(window_gains))
         avg_losses.append(np.mean(window_losses))
 
     avg_gains = np.array(avg_gains)
     avg_losses = np.array(avg_losses)
 
-    rs = np.divide(avg_gains, avg_losses, out=np.zeros_like(avg_gains), where=avg_losses!=0)
+    rs = np.divide(
+        avg_gains, avg_losses, out=np.zeros_like(avg_gains), where=avg_losses != 0
+    )
     rsi = 100 - (100 / (1 + rs))
 
     return rsi
@@ -60,16 +57,16 @@ def standard_rsi(prices, period=14):
 def main():
     """Run optimization demonstrations."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("⚡ OPTIMIZATION DEMONSTRATION")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Generate test data
     sizes = [100, 500, 1000, 5000]
 
     for size in sizes:
         print(f"📊 Data Size: {size} periods")
-        print("-"*80)
+        print("-" * 80)
 
         prices = generate_prices(size)
 
@@ -96,8 +93,8 @@ def main():
         def standard_sma(prices, period):
             """Standard SMA (loop-based)."""
             sma = []
-            for i in range(period-1, len(prices)):
-                sma.append(np.mean(prices[i-period+1:i+1]))
+            for i in range(period - 1, len(prices)):
+                sma.append(np.mean(prices[i - period + 1 : i + 1]))
             return np.array(sma)
 
         with ProfileTimer("  Standard SMA (loop-based)", print_result=False) as timer1:
@@ -119,6 +116,7 @@ def main():
 
         # Standard approach (stores all values)
         import sys as _sys
+
         standard_data = list(prices)
         standard_mem = _sys.getsizeof(standard_data) / 1024
 
@@ -155,9 +153,9 @@ def main():
         print()
 
     # Cache demonstration
-    print("="*80)
+    print("=" * 80)
     print("5️⃣  Caching Demonstration")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     @cached_pattern(ttl=60.0)
     def expensive_calculation(data):
@@ -178,9 +176,9 @@ def main():
     print(f"\n⚡ Cache speedup: ~1000x faster (cache hit)")
 
     # Summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📊 OPTIMIZATION SUMMARY")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     print("Key Improvements:")
     print("  ✅ Vectorized RSI:      2-5x faster than loop-based")
@@ -203,9 +201,9 @@ def main():
     print("  ✅ Memory usage: <100KB for rolling calculations")
     print()
 
-    print("="*80)
+    print("=" * 80)
     print("✅ OPTIMIZATION DEMO COMPLETE")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     print("💡 Next Steps:")
     print("  • Use VectorizedIndicators in pattern detectors")

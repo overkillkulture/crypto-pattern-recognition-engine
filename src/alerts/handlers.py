@@ -1,9 +1,10 @@
 """Alert handler implementations."""
 
-from pathlib import Path
-from typing import Dict, Any
-import aiohttp
 import asyncio
+from pathlib import Path
+from typing import Any, Dict
+
+import aiohttp
 from loguru import logger
 
 from src.core.interfaces import AlertHandler
@@ -36,7 +37,7 @@ Time: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
 
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure console handler."""
-        self.enabled = config.get('enabled', True)
+        self.enabled = config.get("enabled", True)
 
 
 class FileAlertHandler(AlertHandler):
@@ -59,10 +60,12 @@ class FileAlertHandler(AlertHandler):
             return False
 
         try:
-            with open(self.file_path, 'a') as f:
+            with open(self.file_path, "a") as f:
                 f.write(f"\n{'='*80}\n")
-                f.write(f"[{alert.timestamp.isoformat()}] "
-                       f"ALERT [{alert.priority.value.upper()}]\n")
+                f.write(
+                    f"[{alert.timestamp.isoformat()}] "
+                    f"ALERT [{alert.priority.value.upper()}]\n"
+                )
                 f.write(f"{alert.message}\n")
                 f.write(f"Pattern: {alert.pattern_result.pattern_name}\n")
                 f.write(f"Symbol: {alert.pattern_result.symbol}\n")
@@ -80,9 +83,9 @@ class FileAlertHandler(AlertHandler):
 
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure file handler."""
-        self.enabled = config.get('enabled', True)
-        if 'path' in config:
-            self.file_path = Path(config['path'])
+        self.enabled = config.get("enabled", True)
+        if "path" in config:
+            self.file_path = Path(config["path"])
             self._ensure_file_exists()
 
 
@@ -103,20 +106,24 @@ class WebhookAlertHandler(AlertHandler):
 
         # Prepare payload
         payload = {
-            'alert_id': alert.alert_id,
-            'timestamp': alert.timestamp.isoformat(),
-            'priority': alert.priority.value,
-            'message': alert.message,
-            'pattern': {
-                'id': alert.pattern_result.pattern_id,
-                'name': alert.pattern_result.pattern_name,
-                'type': alert.pattern_result.pattern_type.value,
-                'symbol': alert.pattern_result.symbol,
-                'timeframe': alert.pattern_result.timeframe.value if alert.pattern_result.timeframe else None,
-                'signal': alert.pattern_result.signal.value,
-                'confidence': alert.pattern_result.confidence,
-                'metadata': alert.pattern_result.metadata,
-            }
+            "alert_id": alert.alert_id,
+            "timestamp": alert.timestamp.isoformat(),
+            "priority": alert.priority.value,
+            "message": alert.message,
+            "pattern": {
+                "id": alert.pattern_result.pattern_id,
+                "name": alert.pattern_result.pattern_name,
+                "type": alert.pattern_result.pattern_type.value,
+                "symbol": alert.pattern_result.symbol,
+                "timeframe": (
+                    alert.pattern_result.timeframe.value
+                    if alert.pattern_result.timeframe
+                    else None
+                ),
+                "signal": alert.pattern_result.signal.value,
+                "confidence": alert.pattern_result.confidence,
+                "metadata": alert.pattern_result.metadata,
+            },
         }
 
         # Retry logic
@@ -125,15 +132,19 @@ class WebhookAlertHandler(AlertHandler):
                 async with aiohttp.ClientSession(timeout=self.timeout) as session:
                     async with session.post(self.webhook_url, json=payload) as response:
                         if response.status == 200:
-                            logger.info(f"Webhook alert sent successfully: {alert.alert_id}")
+                            logger.info(
+                                f"Webhook alert sent successfully: {alert.alert_id}"
+                            )
                             return True
                         else:
                             logger.warning(f"Webhook returned status {response.status}")
 
             except aiohttp.ClientError as e:
-                logger.error(f"Webhook error (attempt {attempt + 1}/{self.max_retries}): {e}")
+                logger.error(
+                    f"Webhook error (attempt {attempt + 1}/{self.max_retries}): {e}"
+                )
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
 
             except Exception as e:
                 logger.error(f"Unexpected error sending webhook: {e}")
@@ -144,9 +155,9 @@ class WebhookAlertHandler(AlertHandler):
 
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure webhook handler."""
-        self.enabled = config.get('enabled', True)
-        self.webhook_url = config.get('url', self.webhook_url)
-        self.max_retries = config.get('max_retries', 3)
+        self.enabled = config.get("enabled", True)
+        self.webhook_url = config.get("url", self.webhook_url)
+        self.max_retries = config.get("max_retries", 3)
 
 
 class TelegramAlertHandler(AlertHandler):
@@ -184,9 +195,9 @@ class TelegramAlertHandler(AlertHandler):
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
 
         payload = {
-            'chat_id': self.chat_id,
-            'text': message,
-            'parse_mode': 'Markdown',
+            "chat_id": self.chat_id,
+            "text": message,
+            "parse_mode": "Markdown",
         }
 
         # Retry logic
@@ -195,16 +206,22 @@ class TelegramAlertHandler(AlertHandler):
                 async with aiohttp.ClientSession(timeout=self.timeout) as session:
                     async with session.post(url, json=payload) as response:
                         if response.status == 200:
-                            logger.info(f"Telegram alert sent successfully: {alert.alert_id}")
+                            logger.info(
+                                f"Telegram alert sent successfully: {alert.alert_id}"
+                            )
                             return True
                         else:
                             response_text = await response.text()
-                            logger.warning(f"Telegram API error: {response.status} - {response_text}")
+                            logger.warning(
+                                f"Telegram API error: {response.status} - {response_text}"
+                            )
 
             except aiohttp.ClientError as e:
-                logger.error(f"Telegram error (attempt {attempt + 1}/{self.max_retries}): {e}")
+                logger.error(
+                    f"Telegram error (attempt {attempt + 1}/{self.max_retries}): {e}"
+                )
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
 
             except Exception as e:
                 logger.error(f"Unexpected error sending Telegram message: {e}")
@@ -215,10 +232,10 @@ class TelegramAlertHandler(AlertHandler):
 
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure Telegram handler."""
-        self.enabled = config.get('enabled', True)
-        self.bot_token = config.get('bot_token', self.bot_token)
-        self.chat_id = config.get('chat_id', self.chat_id)
-        self.max_retries = config.get('max_retries', 3)
+        self.enabled = config.get("enabled", True)
+        self.bot_token = config.get("bot_token", self.bot_token)
+        self.chat_id = config.get("chat_id", self.chat_id)
+        self.max_retries = config.get("max_retries", 3)
 
 
 class DiscordAlertHandler(AlertHandler):
@@ -240,27 +257,47 @@ class DiscordAlertHandler(AlertHandler):
 
         # Discord embed format
         color = {
-            'low': 0x808080,      # Gray
-            'medium': 0xFFA500,   # Orange
-            'high': 0xFF4500,     # Red-Orange
-            'critical': 0xFF0000,  # Red
+            "low": 0x808080,  # Gray
+            "medium": 0xFFA500,  # Orange
+            "high": 0xFF4500,  # Red-Orange
+            "critical": 0xFF0000,  # Red
         }.get(alert.priority.value, 0x808080)
 
         payload = {
-            'embeds': [{
-                'title': f'🚨 {alert.priority.value.upper()} Alert',
-                'description': alert.message,
-                'color': color,
-                'fields': [
-                    {'name': 'Pattern', 'value': pattern.pattern_name, 'inline': True},
-                    {'name': 'Symbol', 'value': pattern.symbol, 'inline': True},
-                    {'name': 'Signal', 'value': pattern.signal.value.upper(), 'inline': True},
-                    {'name': 'Confidence', 'value': f'{pattern.confidence:.2%}', 'inline': True},
-                    {'name': 'Timeframe', 'value': pattern.timeframe.value if pattern.timeframe else 'N/A', 'inline': True},
-                ],
-                'timestamp': alert.timestamp.isoformat(),
-                'footer': {'text': f'Alert ID: {alert.alert_id}'},
-            }]
+            "embeds": [
+                {
+                    "title": f"🚨 {alert.priority.value.upper()} Alert",
+                    "description": alert.message,
+                    "color": color,
+                    "fields": [
+                        {
+                            "name": "Pattern",
+                            "value": pattern.pattern_name,
+                            "inline": True,
+                        },
+                        {"name": "Symbol", "value": pattern.symbol, "inline": True},
+                        {
+                            "name": "Signal",
+                            "value": pattern.signal.value.upper(),
+                            "inline": True,
+                        },
+                        {
+                            "name": "Confidence",
+                            "value": f"{pattern.confidence:.2%}",
+                            "inline": True,
+                        },
+                        {
+                            "name": "Timeframe",
+                            "value": (
+                                pattern.timeframe.value if pattern.timeframe else "N/A"
+                            ),
+                            "inline": True,
+                        },
+                    ],
+                    "timestamp": alert.timestamp.isoformat(),
+                    "footer": {"text": f"Alert ID: {alert.alert_id}"},
+                }
+            ]
         }
 
         # Retry logic
@@ -269,15 +306,21 @@ class DiscordAlertHandler(AlertHandler):
                 async with aiohttp.ClientSession(timeout=self.timeout) as session:
                     async with session.post(self.webhook_url, json=payload) as response:
                         if response.status in [200, 204]:
-                            logger.info(f"Discord alert sent successfully: {alert.alert_id}")
+                            logger.info(
+                                f"Discord alert sent successfully: {alert.alert_id}"
+                            )
                             return True
                         else:
-                            logger.warning(f"Discord webhook returned status {response.status}")
+                            logger.warning(
+                                f"Discord webhook returned status {response.status}"
+                            )
 
             except aiohttp.ClientError as e:
-                logger.error(f"Discord error (attempt {attempt + 1}/{self.max_retries}): {e}")
+                logger.error(
+                    f"Discord error (attempt {attempt + 1}/{self.max_retries}): {e}"
+                )
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
 
             except Exception as e:
                 logger.error(f"Unexpected error sending Discord alert: {e}")
@@ -288,6 +331,6 @@ class DiscordAlertHandler(AlertHandler):
 
     async def configure(self, config: Dict[str, Any]) -> None:
         """Configure Discord handler."""
-        self.enabled = config.get('enabled', True)
-        self.webhook_url = config.get('webhook_url', self.webhook_url)
-        self.max_retries = config.get('max_retries', 3)
+        self.enabled = config.get("enabled", True)
+        self.webhook_url = config.get("webhook_url", self.webhook_url)
+        self.max_retries = config.get("max_retries", 3)

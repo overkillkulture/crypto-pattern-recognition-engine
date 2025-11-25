@@ -1,19 +1,14 @@
 """Candlestick pattern detection - comprehensive implementation."""
 
-from typing import List
-from datetime import datetime
 import uuid
-import numpy as np
+from datetime import datetime
+from typing import List
+
 from loguru import logger
 
-from src.core.interfaces import PatternDetector, Pattern
-from src.core.types import (
-    OHLCV,
-    PatternResult,
-    PatternType,
-    SignalType,
-    Timeframe,
-)
+from src.core.interfaces import Pattern, PatternDetector
+from src.core.types import (OHLCV, PatternResult, PatternType, SignalType,
+                            Timeframe)
 
 
 class CandlestickPattern(Pattern):
@@ -42,7 +37,9 @@ class CandlestickPattern(Pattern):
         """Calculate lower shadow length."""
         return min(open_price, close_price) - low
 
-    def is_doji(self, open_price: float, close_price: float, high: float, low: float) -> bool:
+    def is_doji(
+        self, open_price: float, close_price: float, high: float, low: float
+    ) -> bool:
         """Check if candle is a doji."""
         body = self.body_size(open_price, close_price)
         full_range = high - low
@@ -69,18 +66,20 @@ class DojiPattern(CandlestickPattern):
         o, h, l, c = data.open[idx], data.high[idx], data.low[idx], data.close[idx]
 
         if self.is_doji(o, c, h, l):
-            results.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Doji",
-                pattern_type=PatternType.CANDLESTICK_PATTERN,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[idx]),
-                confidence=0.70,
-                signal=SignalType.HOLD,
-                metadata={'pattern': 'doji'},
-                description="Doji pattern - market indecision",
-            ))
+            results.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Doji",
+                    pattern_type=PatternType.CANDLESTICK_PATTERN,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[idx]),
+                    confidence=0.70,
+                    signal=SignalType.HOLD,
+                    metadata={"pattern": "doji"},
+                    description="Doji pattern - market indecision",
+                )
+            )
 
         return results
 
@@ -121,31 +120,35 @@ class HammerPattern(CandlestickPattern):
             prev_close = data.close[-2]
 
             if c < prev_close:  # After downtrend - Hammer (bullish)
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Hammer",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[idx]),
-                    confidence=0.75,
-                    signal=SignalType.BUY,
-                    metadata={'pattern': 'hammer'},
-                    description="Hammer pattern - potential bullish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Hammer",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[idx]),
+                        confidence=0.75,
+                        signal=SignalType.BUY,
+                        metadata={"pattern": "hammer"},
+                        description="Hammer pattern - potential bullish reversal",
+                    )
+                )
             else:  # After uptrend - Hanging Man (bearish)
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Hanging Man",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[idx]),
-                    confidence=0.72,
-                    signal=SignalType.SELL,
-                    metadata={'pattern': 'hanging_man'},
-                    description="Hanging Man pattern - potential bearish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Hanging Man",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[idx]),
+                        confidence=0.72,
+                        signal=SignalType.SELL,
+                        metadata={"pattern": "hanging_man"},
+                        description="Hanging Man pattern - potential bearish reversal",
+                    )
+                )
 
         return results
 
@@ -176,34 +179,38 @@ class EngulfingPattern(CandlestickPattern):
         # Bullish Engulfing
         if self.is_bearish_candle(o1, c1) and self.is_bullish_candle(o2, c2):
             if c2 > o1 and o2 < c1:  # Current bullish candle engulfs previous bearish
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Bullish Engulfing",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.82,
-                    signal=SignalType.BUY,
-                    metadata={'pattern': 'bullish_engulfing'},
-                    description="Bullish Engulfing pattern - strong buy signal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Bullish Engulfing",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.82,
+                        signal=SignalType.BUY,
+                        metadata={"pattern": "bullish_engulfing"},
+                        description="Bullish Engulfing pattern - strong buy signal",
+                    )
+                )
 
         # Bearish Engulfing
         elif self.is_bullish_candle(o1, c1) and self.is_bearish_candle(o2, c2):
             if c2 < o1 and o2 > c1:  # Current bearish candle engulfs previous bullish
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Bearish Engulfing",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.82,
-                    signal=SignalType.SELL,
-                    metadata={'pattern': 'bearish_engulfing'},
-                    description="Bearish Engulfing pattern - strong sell signal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Bearish Engulfing",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.82,
+                        signal=SignalType.SELL,
+                        metadata={"pattern": "bearish_engulfing"},
+                        description="Bearish Engulfing pattern - strong sell signal",
+                    )
+                )
 
         return results
 
@@ -232,42 +239,50 @@ class MorningEveningStarPattern(CandlestickPattern):
         o3, c3 = data.open[-1], data.close[-1]
 
         # Morning Star (bullish reversal)
-        if (self.is_bearish_candle(o1, c1) and
-            self.is_doji(o2, c2, h2, l2) and
-            self.is_bullish_candle(o3, c3)):
+        if (
+            self.is_bearish_candle(o1, c1)
+            and self.is_doji(o2, c2, h2, l2)
+            and self.is_bullish_candle(o3, c3)
+        ):
 
             if c3 > (o1 + c1) / 2:  # Third candle closes above midpoint of first
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Morning Star",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.85,
-                    signal=SignalType.STRONG_BUY,
-                    metadata={'pattern': 'morning_star'},
-                    description="Morning Star pattern - strong bullish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Morning Star",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.85,
+                        signal=SignalType.STRONG_BUY,
+                        metadata={"pattern": "morning_star"},
+                        description="Morning Star pattern - strong bullish reversal",
+                    )
+                )
 
         # Evening Star (bearish reversal)
-        elif (self.is_bullish_candle(o1, c1) and
-              self.is_doji(o2, c2, h2, l2) and
-              self.is_bearish_candle(o3, c3)):
+        elif (
+            self.is_bullish_candle(o1, c1)
+            and self.is_doji(o2, c2, h2, l2)
+            and self.is_bearish_candle(o3, c3)
+        ):
 
             if c3 < (o1 + c1) / 2:  # Third candle closes below midpoint of first
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Evening Star",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.85,
-                    signal=SignalType.STRONG_SELL,
-                    metadata={'pattern': 'evening_star'},
-                    description="Evening Star pattern - strong bearish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Evening Star",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.85,
+                        signal=SignalType.STRONG_SELL,
+                        metadata={"pattern": "evening_star"},
+                        description="Evening Star pattern - strong bearish reversal",
+                    )
+                )
 
         return results
 
@@ -297,44 +312,52 @@ class ThreeSoldiersPattern(CandlestickPattern):
         # Three White Soldiers (bullish)
         if all(self.is_bullish_candle(o, c) for o, c in candles):
             # Each candle should close higher and open within previous body
-            if (candles[1][1] > candles[0][1] and
-                candles[2][1] > candles[1][1] and
-                candles[1][0] > candles[0][0] and
-                candles[2][0] > candles[1][0]):
+            if (
+                candles[1][1] > candles[0][1]
+                and candles[2][1] > candles[1][1]
+                and candles[1][0] > candles[0][0]
+                and candles[2][0] > candles[1][0]
+            ):
 
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Three White Soldiers",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.80,
-                    signal=SignalType.STRONG_BUY,
-                    metadata={'pattern': 'three_white_soldiers'},
-                    description="Three White Soldiers - strong bullish trend",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Three White Soldiers",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.80,
+                        signal=SignalType.STRONG_BUY,
+                        metadata={"pattern": "three_white_soldiers"},
+                        description="Three White Soldiers - strong bullish trend",
+                    )
+                )
 
         # Three Black Crows (bearish)
         elif all(self.is_bearish_candle(o, c) for o, c in candles):
             # Each candle should close lower and open within previous body
-            if (candles[1][1] < candles[0][1] and
-                candles[2][1] < candles[1][1] and
-                candles[1][0] < candles[0][0] and
-                candles[2][0] < candles[1][0]):
+            if (
+                candles[1][1] < candles[0][1]
+                and candles[2][1] < candles[1][1]
+                and candles[1][0] < candles[0][0]
+                and candles[2][0] < candles[1][0]
+            ):
 
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Three Black Crows",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.80,
-                    signal=SignalType.STRONG_SELL,
-                    metadata={'pattern': 'three_black_crows'},
-                    description="Three Black Crows - strong bearish trend",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Three Black Crows",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.80,
+                        signal=SignalType.STRONG_SELL,
+                        metadata={"pattern": "three_black_crows"},
+                        description="Three Black Crows - strong bearish trend",
+                    )
+                )
 
         return results
 
@@ -374,31 +397,35 @@ class ShootingStarPattern(CandlestickPattern):
             prev_close = data.close[-2]
 
             if c > prev_close:  # After uptrend - Shooting Star (bearish)
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Shooting Star",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[idx]),
-                    confidence=0.75,
-                    signal=SignalType.SELL,
-                    metadata={'pattern': 'shooting_star'},
-                    description="Shooting Star - potential bearish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Shooting Star",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[idx]),
+                        confidence=0.75,
+                        signal=SignalType.SELL,
+                        metadata={"pattern": "shooting_star"},
+                        description="Shooting Star - potential bearish reversal",
+                    )
+                )
             else:  # After downtrend - Inverted Hammer (bullish)
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Inverted Hammer",
-                    pattern_type=PatternType.CANDLESTICK_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[idx]),
-                    confidence=0.72,
-                    signal=SignalType.BUY,
-                    metadata={'pattern': 'inverted_hammer'},
-                    description="Inverted Hammer - potential bullish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Inverted Hammer",
+                        pattern_type=PatternType.CANDLESTICK_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[idx]),
+                        confidence=0.72,
+                        signal=SignalType.BUY,
+                        metadata={"pattern": "inverted_hammer"},
+                        description="Inverted Hammer - potential bullish reversal",
+                    )
+                )
 
         return results
 
@@ -421,18 +448,22 @@ class CandlestickPatternDetector(PatternDetector):
         # Register default patterns
         self._register_default_patterns()
 
-        logger.info(f"Candlestick Pattern Detector initialized with {len(self.patterns)} patterns")
+        logger.info(
+            f"Candlestick Pattern Detector initialized with {len(self.patterns)} patterns"
+        )
 
     def _register_default_patterns(self):
         """Register default candlestick patterns."""
-        self.patterns.extend([
-            DojiPattern(),
-            HammerPattern(),
-            EngulfingPattern(),
-            MorningEveningStarPattern(),
-            ThreeSoldiersPattern(),
-            ShootingStarPattern(),
-        ])
+        self.patterns.extend(
+            [
+                DojiPattern(),
+                HammerPattern(),
+                EngulfingPattern(),
+                MorningEveningStarPattern(),
+                ThreeSoldiersPattern(),
+                ShootingStarPattern(),
+            ]
+        )
 
     async def detect_patterns(
         self,

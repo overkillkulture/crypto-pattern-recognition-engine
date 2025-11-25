@@ -5,9 +5,10 @@ This module implements ensemble decision-making that preserves both
 perspectives while producing unified actionable outputs.
 """
 
-from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 
 from src.core.types import PatternResult, SignalType
@@ -15,6 +16,7 @@ from src.core.types import PatternResult, SignalType
 
 class FusionStrategy(Enum):
     """Strategy for fusing signals from both hemispheres."""
+
     WEIGHTED_VOTE = "weighted_vote"  # Weight by confidence/coherence
     UNANIMOUS = "unanimous"  # Require agreement
     ANALYTICAL_PRIORITY = "analytical_priority"  # Analytical wins ties
@@ -26,6 +28,7 @@ class FusionStrategy(Enum):
 @dataclass
 class FusedSignal:
     """Result of signal fusion from both hemispheres."""
+
     signal: SignalType
     confidence: float
     analytical_signal: SignalType
@@ -98,6 +101,7 @@ class SignalFusion:
 
         # Convert holistic signal to analytical format for fusion
         from .pattern_bridge import PatternBridge
+
         bridge = PatternBridge()
 
         if holistic_primary:
@@ -108,8 +112,12 @@ class SignalFusion:
             holistic_signal = SignalType.HOLD
             holistic_confidence = 0.0
 
-        analytical_signal = analytical_primary.signal if analytical_primary else SignalType.HOLD
-        analytical_confidence = analytical_primary.confidence if analytical_primary else 0.0
+        analytical_signal = (
+            analytical_primary.signal if analytical_primary else SignalType.HOLD
+        )
+        analytical_confidence = (
+            analytical_primary.confidence if analytical_primary else 0.0
+        )
 
         # Measure coherence if not provided
         if coherence_scores:
@@ -122,47 +130,59 @@ class SignalFusion:
         # Apply fusion strategy
         if strategy == FusionStrategy.WEIGHTED_VOTE:
             fused = self._weighted_vote(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         elif strategy == FusionStrategy.UNANIMOUS:
             fused = self._unanimous(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         elif strategy == FusionStrategy.ANALYTICAL_PRIORITY:
             fused = self._analytical_priority(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         elif strategy == FusionStrategy.HOLISTIC_PRIORITY:
             fused = self._holistic_priority(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         elif strategy == FusionStrategy.HIGHEST_CONFIDENCE:
             fused = self._highest_confidence(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         elif strategy == FusionStrategy.COHERENCE_WEIGHTED:
             fused = self._coherence_weighted(
-                analytical_signal, analytical_confidence,
-                holistic_signal, holistic_confidence,
-                coherence
+                analytical_signal,
+                analytical_confidence,
+                holistic_signal,
+                holistic_confidence,
+                coherence,
             )
         else:
             raise ValueError(f"Unknown fusion strategy: {strategy}")
 
         # Create fused signal
         fused_signal = FusedSignal(
-            signal=fused['signal'],
-            confidence=fused['confidence'],
+            signal=fused["signal"],
+            confidence=fused["confidence"],
             analytical_signal=analytical_signal,
             holistic_signal=holistic_signal,
             analytical_confidence=analytical_confidence,
@@ -170,10 +190,10 @@ class SignalFusion:
             coherence=coherence,
             strategy_used=strategy,
             metadata={
-                'analytical_count': len(analytical_signals),
-                'holistic_count': len(holistic_signals),
-                'agreement': analytical_signal == holistic_signal,
-            }
+                "analytical_count": len(analytical_signals),
+                "holistic_count": len(holistic_signals),
+                "agreement": analytical_signal == holistic_signal,
+            },
         )
 
         # Record fusion
@@ -183,94 +203,103 @@ class SignalFusion:
 
     def _weighted_vote(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Weight signals by confidence."""
         if sig_a == sig_h:
             # Agreement - boost confidence
             return {
-                'signal': sig_a,
-                'confidence': min(1.0, (conf_a + conf_h) / 2 * 1.2)
+                "signal": sig_a,
+                "confidence": min(1.0, (conf_a + conf_h) / 2 * 1.2),
             }
         else:
             # Disagreement - take higher confidence
             if conf_a > conf_h:
-                return {'signal': sig_a, 'confidence': conf_a * 0.8}  # Reduce due to disagreement
+                return {
+                    "signal": sig_a,
+                    "confidence": conf_a * 0.8,
+                }  # Reduce due to disagreement
             else:
-                return {'signal': sig_h, 'confidence': conf_h * 0.8}
+                return {"signal": sig_h, "confidence": conf_h * 0.8}
 
     def _unanimous(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Require unanimous agreement."""
         if sig_a == sig_h:
-            return {
-                'signal': sig_a,
-                'confidence': min(conf_a, conf_h)  # Conservative
-            }
+            return {"signal": sig_a, "confidence": min(conf_a, conf_h)}  # Conservative
         else:
             # No agreement - default to HOLD
-            return {'signal': SignalType.HOLD, 'confidence': 0.5}
+            return {"signal": SignalType.HOLD, "confidence": 0.5}
 
     def _analytical_priority(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Analytical hemisphere wins ties."""
         if coherence > self.coherence_threshold and sig_h == sig_a:
             # High coherence agreement - boost
-            return {'signal': sig_a, 'confidence': (conf_a + conf_h) / 2 * 1.1}
+            return {"signal": sig_a, "confidence": (conf_a + conf_h) / 2 * 1.1}
         else:
             # Use analytical
-            return {'signal': sig_a, 'confidence': conf_a}
+            return {"signal": sig_a, "confidence": conf_a}
 
     def _holistic_priority(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Holistic hemisphere wins ties."""
         if coherence > self.coherence_threshold and sig_h == sig_a:
             # High coherence agreement - boost
-            return {'signal': sig_h, 'confidence': (conf_a + conf_h) / 2 * 1.1}
+            return {"signal": sig_h, "confidence": (conf_a + conf_h) / 2 * 1.1}
         else:
             # Use holistic
-            return {'signal': sig_h, 'confidence': conf_h}
+            return {"signal": sig_h, "confidence": conf_h}
 
     def _highest_confidence(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Take signal with highest confidence."""
         if conf_a >= conf_h:
-            return {'signal': sig_a, 'confidence': conf_a}
+            return {"signal": sig_a, "confidence": conf_a}
         else:
-            return {'signal': sig_h, 'confidence': conf_h}
+            return {"signal": sig_h, "confidence": conf_h}
 
     def _coherence_weighted(
         self,
-        sig_a: SignalType, conf_a: float,
-        sig_h: SignalType, conf_h: float,
-        coherence: float
+        sig_a: SignalType,
+        conf_a: float,
+        sig_h: SignalType,
+        conf_h: float,
+        coherence: float,
     ) -> Dict:
         """Weight by cross-hemisphere coherence."""
         if sig_a == sig_h:
             # Agreement - coherence boosts confidence
             boosted_conf = (conf_a + conf_h) / 2 * (1.0 + coherence * 0.3)
-            return {
-                'signal': sig_a,
-                'confidence': min(1.0, boosted_conf)
-            }
+            return {"signal": sig_a, "confidence": min(1.0, boosted_conf)}
         else:
             # Disagreement - coherence determines blend
             if coherence > 0.7:
@@ -278,7 +307,7 @@ class SignalFusion:
                 avg_conf = (conf_a + conf_h) / 2 * 0.7
                 # Take higher original confidence
                 signal = sig_a if conf_a > conf_h else sig_h
-                return {'signal': signal, 'confidence': avg_conf}
+                return {"signal": signal, "confidence": avg_conf}
             else:
                 # Low coherence - weighted by individual confidence
                 total_weight = conf_a + conf_h
@@ -289,21 +318,17 @@ class SignalFusion:
                 else:
                     signal = SignalType.HOLD
                     confidence = 0.5
-                return {'signal': signal, 'confidence': confidence}
+                return {"signal": signal, "confidence": confidence}
 
     def _get_primary_signal(
-        self,
-        signals: List[PatternResult]
+        self, signals: List[PatternResult]
     ) -> Optional[PatternResult]:
         """Get highest confidence signal from list."""
         if not signals:
             return None
         return max(signals, key=lambda x: x.confidence)
 
-    def _get_primary_holistic_signal(
-        self,
-        signals: List
-    ) -> Optional:
+    def _get_primary_holistic_signal(self, signals: List) -> Optional:
         """Get highest coherence holistic signal."""
         if not signals:
             return None
@@ -323,6 +348,7 @@ class SignalFusion:
             (resolved_signal, explanation)
         """
         from .pattern_bridge import PatternBridge
+
         bridge = PatternBridge()
 
         # Convert holistic to analytical for comparison
@@ -334,28 +360,27 @@ class SignalFusion:
                 # Very low coherence - major conflict
                 return (
                     SignalType.HOLD,
-                    f"Major conflict: coherence={coherence:.2f}, defaulting to HOLD"
+                    f"Major conflict: coherence={coherence:.2f}, defaulting to HOLD",
                 )
             elif coherence < 0.5:
                 # Moderate conflict - use higher confidence
                 if analytical.confidence > holistic_as_analytical.confidence:
                     return (
                         analytical.signal,
-                        f"Moderate conflict resolved by analytical (conf={analytical.confidence:.2f})"
+                        f"Moderate conflict resolved by analytical (conf={analytical.confidence:.2f})",
                     )
                 else:
                     return (
                         holistic_as_analytical.signal,
-                        f"Moderate conflict resolved by holistic (conf={holistic_as_analytical.confidence:.2f})"
+                        f"Moderate conflict resolved by holistic (conf={holistic_as_analytical.confidence:.2f})",
                     )
             else:
                 # Minor conflict - average
-                avg_conf = (analytical.confidence + holistic_as_analytical.confidence) / 2
+                avg_conf = (
+                    analytical.confidence + holistic_as_analytical.confidence
+                ) / 2
                 signal = analytical.signal if avg_conf > 0.5 else SignalType.HOLD
-                return (
-                    signal,
-                    f"Minor conflict resolved: avg_conf={avg_conf:.2f}"
-                )
+                return (signal, f"Minor conflict resolved: avg_conf={avg_conf:.2f}")
         else:
             # No holistic signal - use analytical
             return (analytical.signal, "No holistic signal available")
@@ -363,28 +388,31 @@ class SignalFusion:
     def get_fusion_stats(self) -> Dict:
         """Get statistics on fusion history."""
         if not self.fusion_history:
-            return {'count': 0}
+            return {"count": 0}
 
         total = len(self.fusion_history)
-        agreements = sum(1 for f in self.fusion_history if f.analytical_signal == f.holistic_signal)
+        agreements = sum(
+            1 for f in self.fusion_history if f.analytical_signal == f.holistic_signal
+        )
         avg_coherence = np.mean([f.coherence for f in self.fusion_history])
         avg_confidence = np.mean([f.confidence for f in self.fusion_history])
 
         return {
-            'total_fusions': total,
-            'agreements': agreements,
-            'agreement_rate': agreements / total if total > 0 else 0.0,
-            'avg_coherence': avg_coherence,
-            'avg_confidence': avg_confidence,
-            'last_fusion': str(self.fusion_history[-1]),
+            "total_fusions": total,
+            "agreements": agreements,
+            "agreement_rate": agreements / total if total > 0 else 0.0,
+            "avg_coherence": avg_coherence,
+            "avg_confidence": avg_confidence,
+            "last_fusion": str(self.fusion_history[-1]),
         }
 
 
 # Example usage
 if __name__ == "__main__":
-    from src.core.types import PatternType
-    from datetime import datetime
     import uuid
+    from datetime import datetime
+
+    from src.core.types import PatternType
 
     # Create sample analytical signal
     analytical = PatternResult(
@@ -396,12 +424,13 @@ if __name__ == "__main__":
         timestamp=datetime.now(),
         signal=SignalType.BUY,
         confidence=0.85,
-        metadata={'rsi': 28.5},
-        description="RSI oversold"
+        metadata={"rsi": 28.5},
+        description="RSI oversold",
     )
 
     # Create holistic signal (simulated)
     from .pattern_bridge import HolisticPattern
+
     holistic = HolisticPattern(
         pattern_type="consciousness_expansion",
         state="expanding",
@@ -409,7 +438,7 @@ if __name__ == "__main__":
         timestamp=datetime.now(),
         metadata={},
         trajectory="ascending",
-        dimension="awareness"
+        dimension="awareness",
     )
 
     # Fuse signals
@@ -433,7 +462,7 @@ if __name__ == "__main__":
         signal=SignalType.SELL,
         confidence=0.75,
         metadata={},
-        description="MACD bearish"
+        description="MACD bearish",
     )
 
     fused_conflict = fusion.fuse([analytical_sell], [holistic])

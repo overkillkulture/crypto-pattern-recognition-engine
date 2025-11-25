@@ -1,9 +1,10 @@
 """Risk management utilities for trading."""
 
-from typing import Optional, Dict, Tuple
-from dataclasses import dataclass
-import numpy as np
 import logging
+from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,9 @@ class RiskManager:
 
         # Adjust for current portfolio risk
         current_total_risk = sum(self.open_risk.values())
-        remaining_risk = (self.max_risk_pct / 100) * self.account_size - current_total_risk
+        remaining_risk = (
+            self.max_risk_pct / 100
+        ) * self.account_size - current_total_risk
 
         if remaining_risk < risk_amount:
             logger.warning(
@@ -337,7 +340,9 @@ class RiskManager:
         if len(excess_returns) == 0 or np.std(excess_returns) == 0:
             return 0.0
 
-        return (np.mean(excess_returns) / np.std(excess_returns)) * np.sqrt(periods_per_year)
+        return (np.mean(excess_returns) / np.std(excess_returns)) * np.sqrt(
+            periods_per_year
+        )
 
     def calculate_sortino_ratio(
         self,
@@ -368,9 +373,13 @@ class RiskManager:
         if downside_deviation == 0:
             return 0.0
 
-        return (np.mean(excess_returns) / downside_deviation) * np.sqrt(periods_per_year)
+        return (np.mean(excess_returns) / downside_deviation) * np.sqrt(
+            periods_per_year
+        )
 
-    def calculate_max_drawdown(self, equity_curve: np.ndarray) -> Tuple[float, int, int]:
+    def calculate_max_drawdown(
+        self, equity_curve: np.ndarray
+    ) -> Tuple[float, int, int]:
         """
         Calculate maximum drawdown from equity curve.
 
@@ -463,12 +472,16 @@ class RiskManager:
 
     def print_risk_summary(self):
         """Print risk management summary."""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("RISK MANAGEMENT SUMMARY")
-        print("="*70)
+        print("=" * 70)
         print(f"Account Size: ${self.account_size:,.2f}")
-        print(f"Risk Per Trade: {self.risk_per_trade_pct}% (${self.account_size * self.risk_per_trade_pct / 100:,.2f})")
-        print(f"Max Portfolio Risk: {self.max_risk_pct}% (${self.account_size * self.max_risk_pct / 100:,.2f})")
+        print(
+            f"Risk Per Trade: {self.risk_per_trade_pct}% (${self.account_size * self.risk_per_trade_pct / 100:,.2f})"
+        )
+        print(
+            f"Max Portfolio Risk: {self.max_risk_pct}% (${self.account_size * self.max_risk_pct / 100:,.2f})"
+        )
 
         current_risk = sum(self.open_risk.values())
         current_risk_pct = (current_risk / self.account_size) * 100
@@ -482,4 +495,4 @@ class RiskManager:
                 risk_pct = (risk / self.account_size) * 100
                 print(f"  {symbol:12s} ${risk:8,.2f} ({risk_pct:.2f}%)")
 
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")

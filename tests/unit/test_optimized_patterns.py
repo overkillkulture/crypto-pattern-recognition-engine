@@ -4,28 +4,21 @@ Unit tests for optimized pattern detectors.
 Tests the OptimizedRSIPattern, OptimizedMACDPattern, and OptimizedBollingerBandsPattern.
 """
 
-import pytest
 import sys
+
 import numpy as np
+import pytest
 
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
 
-from src.patterns.optimized import (
-    OptimizedRSIPattern,
-    OptimizedMACDPattern,
-    OptimizedBollingerBandsPattern,
-    StreamingRSI,
-)
 from src.core.types import SignalType
-from tests.fixtures.market_data import (
-    generate_ohlcv,
-    generate_rsi_oversold,
-    generate_rsi_overbought,
-    generate_macd_bullish_cross,
-    FIXTURE_MEDIUM,
-    FIXTURE_RSI_OVERSOLD,
-    FIXTURE_RSI_OVERBOUGHT,
-)
+from src.patterns.optimized import (OptimizedBollingerBandsPattern,
+                                    OptimizedMACDPattern, OptimizedRSIPattern,
+                                    StreamingRSI)
+from tests.fixtures.market_data import (FIXTURE_MEDIUM, generate_macd_bullish_cross,
+                                        generate_ohlcv,
+                                        generate_rsi_overbought,
+                                        generate_rsi_oversold)
 
 
 class TestOptimizedRSIPattern:
@@ -86,8 +79,8 @@ class TestOptimizedRSIPattern:
 
         # Verify metadata
         for pattern in patterns:
-            assert 'rsi' in pattern.metadata
-            assert 'threshold' in pattern.metadata
+            assert "rsi" in pattern.metadata
+            assert "threshold" in pattern.metadata
 
     def test_detect_overbought_condition(self):
         """Test detection of overbought condition."""
@@ -202,9 +195,9 @@ class TestOptimizedMACDPattern:
 
         if patterns:
             for pattern in patterns:
-                assert 'macd' in pattern.metadata
-                assert 'signal' in pattern.metadata
-                assert 'histogram' in pattern.metadata
+                assert "macd" in pattern.metadata
+                assert "signal" in pattern.metadata
+                assert "histogram" in pattern.metadata
 
 
 class TestOptimizedBollingerBandsPattern:
@@ -255,10 +248,10 @@ class TestOptimizedBollingerBandsPattern:
 
         if patterns:
             for pattern in patterns:
-                assert 'price' in pattern.metadata
-                assert 'lower_band' in pattern.metadata
-                assert 'middle_band' in pattern.metadata
-                assert 'upper_band' in pattern.metadata
+                assert "price" in pattern.metadata
+                assert "lower_band" in pattern.metadata
+                assert "middle_band" in pattern.metadata
+                assert "upper_band" in pattern.metadata
 
     def test_different_std_dev(self):
         """Test BB with different standard deviations."""

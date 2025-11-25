@@ -1,17 +1,9 @@
 """Database models for pattern recognition engine."""
 
 from datetime import datetime
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Float,
-    DateTime,
-    Text,
-    Boolean,
-    JSON,
-    Index,
-)
+
+from sqlalchemy import (JSON, Boolean, Column, DateTime, Float, Index, Integer,
+                        String, Text)
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -20,7 +12,7 @@ Base = declarative_base()
 class PatternDetectionModel(Base):
     """Model for storing pattern detections."""
 
-    __tablename__ = 'pattern_detections'
+    __tablename__ = "pattern_detections"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     pattern_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -53,8 +45,8 @@ class PatternDetectionModel(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_symbol_timestamp', 'symbol', 'timestamp'),
-        Index('idx_pattern_confidence', 'pattern_name', 'confidence'),
+        Index("idx_symbol_timestamp", "symbol", "timestamp"),
+        Index("idx_pattern_confidence", "pattern_name", "confidence"),
     )
 
     def __repr__(self):
@@ -64,7 +56,7 @@ class PatternDetectionModel(Base):
 class TradeModel(Base):
     """Model for storing backtest and live trades."""
 
-    __tablename__ = 'trades'
+    __tablename__ = "trades"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     trade_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -105,8 +97,8 @@ class TradeModel(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_symbol_entry', 'symbol', 'entry_time'),
-        Index('idx_open_trades', 'is_open', 'symbol'),
+        Index("idx_symbol_entry", "symbol", "entry_time"),
+        Index("idx_open_trades", "is_open", "symbol"),
     )
 
     def __repr__(self):
@@ -116,7 +108,7 @@ class TradeModel(Base):
 class AnalysisResultModel(Base):
     """Model for storing analysis results."""
 
-    __tablename__ = 'analysis_results'
+    __tablename__ = "analysis_results"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     analysis_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -154,8 +146,8 @@ class AnalysisResultModel(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_symbol_timestamp_analysis', 'symbol', 'timestamp'),
-        Index('idx_signal_confidence', 'overall_signal', 'confidence'),
+        Index("idx_symbol_timestamp_analysis", "symbol", "timestamp"),
+        Index("idx_signal_confidence", "overall_signal", "confidence"),
     )
 
     def __repr__(self):
@@ -165,7 +157,7 @@ class AnalysisResultModel(Base):
 class AlertModel(Base):
     """Model for storing alerts."""
 
-    __tablename__ = 'alerts'
+    __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     alert_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -194,8 +186,8 @@ class AlertModel(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_priority_sent', 'priority', 'sent'),
-        Index('idx_symbol_timestamp_alert', 'symbol', 'timestamp'),
+        Index("idx_priority_sent", "priority", "sent"),
+        Index("idx_symbol_timestamp_alert", "symbol", "timestamp"),
     )
 
     def __repr__(self):
@@ -205,7 +197,7 @@ class AlertModel(Base):
 class BacktestResultModel(Base):
     """Model for storing backtest results."""
 
-    __tablename__ = 'backtest_results'
+    __tablename__ = "backtest_results"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     backtest_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -255,8 +247,8 @@ class BacktestResultModel(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_strategy_return', 'strategy_name', 'total_return_pct'),
-        Index('idx_symbol_dates', 'symbol', 'start_date', 'end_date'),
+        Index("idx_strategy_return", "strategy_name", "total_return_pct"),
+        Index("idx_symbol_dates", "symbol", "start_date", "end_date"),
     )
 
     def __repr__(self):

@@ -11,16 +11,18 @@ Demonstrates:
 
 import asyncio
 import sys
-import numpy as np
 from datetime import datetime, timedelta
 
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
+import numpy as np
 
-from src.trading.simulator import TradingSimulator, OrderSide
-from src.trading.portfolio import Portfolio
-from src.utils.risk import RiskManager
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
+
 from src.core.types import OHLCV, SignalType
-from src.patterns.technical import RSIPattern, MACDPattern, BollingerBandsPattern
+from src.patterns.technical import (BollingerBandsPattern, MACDPattern,
+                                    RSIPattern)
+from src.trading.portfolio import Portfolio
+from src.trading.simulator import OrderSide, TradingSimulator
+from src.utils.risk import RiskManager
 
 
 def generate_market_data(days=30, initial_price=50000):
@@ -28,16 +30,18 @@ def generate_market_data(days=30, initial_price=50000):
     print(f"📊 Generating {days} days of market data...")
 
     periods = days * 24  # Hourly data
-    timestamps = np.array([
-        (datetime.now() - timedelta(hours=periods-i)).timestamp()
-        for i in range(periods)
-    ])
+    timestamps = np.array(
+        [
+            (datetime.now() - timedelta(hours=periods - i)).timestamp()
+            for i in range(periods)
+        ]
+    )
 
     # Create price movement with trend changes (hourly returns, not daily)
     # First half: uptrend (0.05% per hour avg = ~1.2% per day)
     # Second half: downtrend (-0.025% per hour avg = -0.6% per day)
-    trend1 = np.linspace(0, 0.0005, periods//2)
-    trend2 = np.linspace(0.0005, -0.00025, periods - periods//2)
+    trend1 = np.linspace(0, 0.0005, periods // 2)
+    trend2 = np.linspace(0.0005, -0.00025, periods - periods // 2)
     trend = np.concatenate([trend1, trend2])
 
     # Add volatility (0.2% per hour)
@@ -74,9 +78,9 @@ def generate_market_data(days=30, initial_price=50000):
 async def run_pattern_trading_strategy():
     """Run a pattern-based trading strategy simulation."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📈 PATTERN-BASED TRADING STRATEGY SIMULATION")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Initialize simulator
     initial_capital = 10000
@@ -118,20 +122,20 @@ async def run_pattern_trading_strategy():
     symbol = "BTC/USDT"
     current_position = None
 
-    print("="*70)
+    print("=" * 70)
     print("RUNNING BACKTEST")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Simulate trading period by period
     for i in range(50, len(data.close)):  # Start after warmup period
         # Get current slice of data
         window_data = OHLCV(
-            timestamps=data.timestamps[:i+1],
-            open=data.open[:i+1],
-            high=data.high[:i+1],
-            low=data.low[:i+1],
-            close=data.close[:i+1],
-            volume=data.volume[:i+1],
+            timestamps=data.timestamps[: i + 1],
+            open=data.open[: i + 1],
+            high=data.high[: i + 1],
+            low=data.low[: i + 1],
+            close=data.close[: i + 1],
+            volume=data.volume[: i + 1],
         )
 
         current_price = data.close[i]
@@ -186,14 +190,16 @@ async def run_pattern_trading_strategy():
 
                 if order and order.is_filled:
                     current_position = {
-                        'entry_price': current_price,
-                        'stop_loss': stop_loss,
-                        'take_profit': position_size.take_profit,
-                        'quantity': actual_quantity,
-                        'entry_time': current_time,
+                        "entry_price": current_price,
+                        "stop_loss": stop_loss,
+                        "take_profit": position_size.take_profit,
+                        "quantity": actual_quantity,
+                        "entry_time": current_time,
                     }
 
-                    print(f"🟢 BUY at ${current_price:,.0f} ({len(buy_signals)} signals)")
+                    print(
+                        f"🟢 BUY at ${current_price:,.0f} ({len(buy_signals)} signals)"
+                    )
                     print(f"   Quantity: {actual_quantity:.4f}")
                     print(f"   Stop Loss: ${stop_loss:,.0f}")
                     print(f"   Take Profit: ${position_size.take_profit:,.0f}")
@@ -206,12 +212,15 @@ async def run_pattern_trading_strategy():
             exit_reason = ""
 
             # Stop loss hit
-            if current_price <= current_position['stop_loss']:
+            if current_price <= current_position["stop_loss"]:
                 should_exit = True
                 exit_reason = "Stop Loss"
 
             # Take profit hit
-            elif current_position['take_profit'] and current_price >= current_position['take_profit']:
+            elif (
+                current_position["take_profit"]
+                and current_price >= current_position["take_profit"]
+            ):
                 should_exit = True
                 exit_reason = "Take Profit"
 
@@ -225,19 +234,25 @@ async def run_pattern_trading_strategy():
                 order = simulator.market_order(
                     symbol,
                     OrderSide.SELL,
-                    current_position['quantity'],
+                    current_position["quantity"],
                     current_price,
                 )
 
                 if order and order.is_filled:
-                    pnl = (current_price - current_position['entry_price']) * current_position['quantity']
-                    pnl_pct = ((current_price / current_position['entry_price']) - 1) * 100
+                    pnl = (
+                        current_price - current_position["entry_price"]
+                    ) * current_position["quantity"]
+                    pnl_pct = (
+                        (current_price / current_position["entry_price"]) - 1
+                    ) * 100
 
                     emoji = "🟢" if pnl > 0 else "🔴"
                     print(f"{emoji} SELL at ${current_price:,.0f} ({exit_reason})")
                     print(f"   Entry: ${current_position['entry_price']:,.0f}")
                     print(f"   P&L: ${pnl:+,.2f} ({pnl_pct:+.2f}%)")
-                    print(f"   Hold Time: {(current_time - current_position['entry_time']).days} days\n")
+                    print(
+                        f"   Hold Time: {(current_time - current_position['entry_time']).days} days\n"
+                    )
 
                     # Clear position
                     risk_mgr.close_position_risk(symbol)
@@ -246,13 +261,15 @@ async def run_pattern_trading_strategy():
     # Close any remaining position
     if current_position is not None:
         final_price = data.close[-1]
-        simulator.market_order(symbol, OrderSide.SELL, current_position['quantity'], final_price)
+        simulator.market_order(
+            symbol, OrderSide.SELL, current_position["quantity"], final_price
+        )
         print(f"🔵 CLOSE FINAL POSITION at ${final_price:,.0f}\n")
 
     # Get final statistics
-    print("="*70)
+    print("=" * 70)
     print("BACKTEST RESULTS")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     stats = simulator.get_statistics()
 
@@ -283,36 +300,36 @@ async def run_pattern_trading_strategy():
     # Buy & hold comparison
     buy_hold_return = ((data.close[-1] / data.close[50]) - 1) * 100
     print(f"Benchmark (Buy & Hold): {buy_hold_return:+.2f}%")
-    outperformance = stats['total_return_pct'] - buy_hold_return
+    outperformance = stats["total_return_pct"] - buy_hold_return
     print(f"Strategy Outperformance: {outperformance:+.2f}%")
     print()
 
-    print("="*70)
+    print("=" * 70)
 
-    if stats['total_return_pct'] > 0:
+    if stats["total_return_pct"] > 0:
         print("✅ PROFITABLE STRATEGY")
     else:
         print("❌ UNPROFITABLE STRATEGY")
 
-    if stats['win_rate'] > 50:
+    if stats["win_rate"] > 50:
         print("✅ POSITIVE WIN RATE")
     else:
         print("⚠️  WIN RATE BELOW 50%")
 
-    if stats['total_return_pct'] > buy_hold_return:
+    if stats["total_return_pct"] > buy_hold_return:
         print("✅ OUTPERFORMED BUY & HOLD")
     else:
         print("⚠️  UNDERPERFORMED BUY & HOLD")
 
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 async def main():
     """Run trading simulator demonstrations."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🚀 TRADING SIMULATOR DEMONSTRATION")
-    print("="*70)
+    print("=" * 70)
     print()
     print("This demo shows paper trading with:")
     print("  • Pattern-based entry/exit signals")
@@ -335,6 +352,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

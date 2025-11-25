@@ -5,12 +5,13 @@ These patterns provide additional signal confirmation and trend strength analysi
 for the analytical hemisphere of the dual-hemisphere trading system.
 """
 
-import numpy as np
-from typing import List, Optional, Tuple
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List, Tuple
 
-from src.core.types import OHLCV, PatternResult, SignalType, PatternType
+import numpy as np
+
+from src.core.types import OHLCV, PatternResult, PatternType, SignalType
 from src.patterns.detector import Pattern
 from src.utils.optimization import VectorizedIndicators
 
@@ -38,7 +39,7 @@ class ADXPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate ADX result."""
-        required = ['adx', 'plus_di', 'minus_di']
+        required = ["adx", "plus_di", "minus_di"]
         return all(key in result.metadata for key in required)
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
@@ -61,81 +62,87 @@ class ADXPattern(Pattern):
         patterns = []
 
         # Strong uptrend: ADX > threshold and +DI > -DI
-        if current_adx > self.strong_trend_threshold and current_plus_di > current_minus_di:
+        if (
+            current_adx > self.strong_trend_threshold
+            and current_plus_di > current_minus_di
+        ):
             confidence = min(
-                0.7 + (current_adx - self.strong_trend_threshold) / 100,
-                0.95
+                0.7 + (current_adx - self.strong_trend_threshold) / 100, 0.95
             )
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="ADX Strong Uptrend",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=confidence,
-                metadata={
-                    'adx': float(current_adx),
-                    'plus_di': float(current_plus_di),
-                    'minus_di': float(current_minus_di),
-                    'trend_strength': 'strong',
-                },
-                description=f"Strong uptrend: ADX={current_adx:.1f}, +DI={current_plus_di:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="ADX Strong Uptrend",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=confidence,
+                    metadata={
+                        "adx": float(current_adx),
+                        "plus_di": float(current_plus_di),
+                        "minus_di": float(current_minus_di),
+                        "trend_strength": "strong",
+                    },
+                    description=f"Strong uptrend: ADX={current_adx:.1f}, +DI={current_plus_di:.1f}",
+                )
+            )
 
         # Strong downtrend: ADX > threshold and -DI > +DI
-        elif current_adx > self.strong_trend_threshold and current_minus_di > current_plus_di:
+        elif (
+            current_adx > self.strong_trend_threshold
+            and current_minus_di > current_plus_di
+        ):
             confidence = min(
-                0.7 + (current_adx - self.strong_trend_threshold) / 100,
-                0.95
+                0.7 + (current_adx - self.strong_trend_threshold) / 100, 0.95
             )
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="ADX Strong Downtrend",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=confidence,
-                metadata={
-                    'adx': float(current_adx),
-                    'plus_di': float(current_plus_di),
-                    'minus_di': float(current_minus_di),
-                    'trend_strength': 'strong',
-                },
-                description=f"Strong downtrend: ADX={current_adx:.1f}, -DI={current_minus_di:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="ADX Strong Downtrend",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=confidence,
+                    metadata={
+                        "adx": float(current_adx),
+                        "plus_di": float(current_plus_di),
+                        "minus_di": float(current_minus_di),
+                        "trend_strength": "strong",
+                    },
+                    description=f"Strong downtrend: ADX={current_adx:.1f}, -DI={current_minus_di:.1f}",
+                )
+            )
 
         # Weak trend / ranging market
         elif current_adx < self.weak_trend_threshold:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="ADX Weak Trend",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.HOLD,
-                confidence=0.6,
-                metadata={
-                    'adx': float(current_adx),
-                    'plus_di': float(current_plus_di),
-                    'minus_di': float(current_minus_di),
-                    'trend_strength': 'weak',
-                },
-                description=f"Weak trend/ranging: ADX={current_adx:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="ADX Weak Trend",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.HOLD,
+                    confidence=0.6,
+                    metadata={
+                        "adx": float(current_adx),
+                        "plus_di": float(current_plus_di),
+                        "minus_di": float(current_minus_di),
+                        "trend_strength": "weak",
+                    },
+                    description=f"Weak trend/ranging: ADX={current_adx:.1f}",
+                )
+            )
 
         return patterns
 
     def _calculate_adx(
-        self,
-        high: np.ndarray,
-        low: np.ndarray,
-        close: np.ndarray,
-        period: int
+        self, high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Calculate ADX, +DI, and -DI."""
         # True Range
@@ -172,12 +179,12 @@ class ADXPattern(Pattern):
             return np.array([])
 
         smoothed = np.zeros(len(data))
-        smoothed[period-1] = np.mean(data[:period])
+        smoothed[period - 1] = np.mean(data[:period])
 
         for i in range(period, len(data)):
-            smoothed[i] = (smoothed[i-1] * (period - 1) + data[i]) / period
+            smoothed[i] = (smoothed[i - 1] * (period - 1) + data[i]) / period
 
-        return smoothed[period-1:]
+        return smoothed[period - 1 :]
 
 
 class ParabolicSARPattern(Pattern):
@@ -200,7 +207,7 @@ class ParabolicSARPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate SAR result."""
-        return 'sar' in result.metadata and 'trend' in result.metadata
+        return "sar" in result.metadata and "trend" in result.metadata
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
         """Detect Parabolic SAR patterns."""
@@ -208,8 +215,7 @@ class ParabolicSARPattern(Pattern):
             return []
 
         sar_values, trend = self._calculate_sar(
-            data.high, data.low, data.close,
-            self.acceleration, self.maximum
+            data.high, data.low, data.close, self.acceleration, self.maximum
         )
 
         if len(sar_values) < 2:
@@ -225,89 +231,97 @@ class ParabolicSARPattern(Pattern):
 
         # Bullish reversal: SAR flipped from above to below price
         if prev_trend == -1 and current_trend == 1:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="SAR Bullish Reversal",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=0.75,
-                metadata={
-                    'sar': float(current_sar),
-                    'price': float(current_price),
-                    'trend': 'up',
-                    'reversal': True,
-                },
-                description=f"Bullish SAR reversal: SAR={current_sar:.2f}, Price={current_price:.2f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="SAR Bullish Reversal",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=0.75,
+                    metadata={
+                        "sar": float(current_sar),
+                        "price": float(current_price),
+                        "trend": "up",
+                        "reversal": True,
+                    },
+                    description=f"Bullish SAR reversal: SAR={current_sar:.2f}, Price={current_price:.2f}",
+                )
+            )
 
         # Bearish reversal: SAR flipped from below to above price
         elif prev_trend == 1 and current_trend == -1:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="SAR Bearish Reversal",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=0.75,
-                metadata={
-                    'sar': float(current_sar),
-                    'price': float(current_price),
-                    'trend': 'down',
-                    'reversal': True,
-                },
-                description=f"Bearish SAR reversal: SAR={current_sar:.2f}, Price={current_price:.2f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="SAR Bearish Reversal",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=0.75,
+                    metadata={
+                        "sar": float(current_sar),
+                        "price": float(current_price),
+                        "trend": "down",
+                        "reversal": True,
+                    },
+                    description=f"Bearish SAR reversal: SAR={current_sar:.2f}, Price={current_price:.2f}",
+                )
+            )
 
         # Continuing uptrend
         elif current_trend == 1 and prev_trend == 1:
             distance = (current_price - current_sar) / current_price
             confidence = min(0.6 + distance * 5, 0.85)
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="SAR Uptrend",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=confidence,
-                metadata={
-                    'sar': float(current_sar),
-                    'price': float(current_price),
-                    'trend': 'up',
-                    'reversal': False,
-                },
-                description=f"SAR uptrend: SAR={current_sar:.2f}, Price={current_price:.2f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="SAR Uptrend",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=confidence,
+                    metadata={
+                        "sar": float(current_sar),
+                        "price": float(current_price),
+                        "trend": "up",
+                        "reversal": False,
+                    },
+                    description=f"SAR uptrend: SAR={current_sar:.2f}, Price={current_price:.2f}",
+                )
+            )
 
         # Continuing downtrend
         elif current_trend == -1 and prev_trend == -1:
             distance = (current_sar - current_price) / current_price
             confidence = min(0.6 + distance * 5, 0.85)
 
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="SAR Downtrend",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=confidence,
-                metadata={
-                    'sar': float(current_sar),
-                    'price': float(current_price),
-                    'trend': 'down',
-                    'reversal': False,
-                },
-                description=f"SAR downtrend: SAR={current_sar:.2f}, Price={current_price:.2f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="SAR Downtrend",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=confidence,
+                    metadata={
+                        "sar": float(current_sar),
+                        "price": float(current_price),
+                        "trend": "down",
+                        "reversal": False,
+                    },
+                    description=f"SAR downtrend: SAR={current_sar:.2f}, Price={current_price:.2f}",
+                )
+            )
 
         return patterns
 
@@ -317,7 +331,7 @@ class ParabolicSARPattern(Pattern):
         low: np.ndarray,
         close: np.ndarray,
         af_start: float,
-        af_max: float
+        af_max: float,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate Parabolic SAR."""
         n = len(close)
@@ -333,10 +347,10 @@ class ParabolicSARPattern(Pattern):
 
         for i in range(1, n):
             # Calculate SAR
-            sar[i] = sar[i-1] + af * (ep - sar[i-1])
+            sar[i] = sar[i - 1] + af * (ep - sar[i - 1])
 
             # Check for reversal
-            if trend[i-1] == 1:  # Uptrend
+            if trend[i - 1] == 1:  # Uptrend
                 if low[i] < sar[i]:
                     # Reverse to downtrend
                     trend[i] = -1
@@ -388,7 +402,7 @@ class StochasticPattern(Pattern):
 
     def validate(self, result: PatternResult) -> bool:
         """Validate Stochastic result."""
-        required = ['k', 'd']
+        required = ["k", "d"]
         return all(key in result.metadata for key in required)
 
     def detect(self, data: OHLCV) -> List[PatternResult]:
@@ -397,8 +411,7 @@ class StochasticPattern(Pattern):
             return []
 
         k_values, d_values = self._calculate_stochastic(
-            data.high, data.low, data.close,
-            self.k_period, self.d_period
+            data.high, data.low, data.close, self.k_period, self.d_period
         )
 
         if len(k_values) < 2 or len(d_values) < 2:
@@ -413,83 +426,91 @@ class StochasticPattern(Pattern):
 
         # Oversold with bullish crossover
         if current_k < self.oversold and prev_k < prev_d and current_k > current_d:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Stochastic Oversold Bullish Cross",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=0.80,
-                metadata={
-                    'k': float(current_k),
-                    'd': float(current_d),
-                    'zone': 'oversold',
-                    'crossover': 'bullish',
-                },
-                description=f"Stochastic oversold bullish cross: K={current_k:.1f}, D={current_d:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Stochastic Oversold Bullish Cross",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=0.80,
+                    metadata={
+                        "k": float(current_k),
+                        "d": float(current_d),
+                        "zone": "oversold",
+                        "crossover": "bullish",
+                    },
+                    description=f"Stochastic oversold bullish cross: K={current_k:.1f}, D={current_d:.1f}",
+                )
+            )
 
         # Overbought with bearish crossover
         elif current_k > self.overbought and prev_k > prev_d and current_k < current_d:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Stochastic Overbought Bearish Cross",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=0.80,
-                metadata={
-                    'k': float(current_k),
-                    'd': float(current_d),
-                    'zone': 'overbought',
-                    'crossover': 'bearish',
-                },
-                description=f"Stochastic overbought bearish cross: K={current_k:.1f}, D={current_d:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Stochastic Overbought Bearish Cross",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=0.80,
+                    metadata={
+                        "k": float(current_k),
+                        "d": float(current_d),
+                        "zone": "overbought",
+                        "crossover": "bearish",
+                    },
+                    description=f"Stochastic overbought bearish cross: K={current_k:.1f}, D={current_d:.1f}",
+                )
+            )
 
         # Oversold (no crossover yet)
         elif current_k < self.oversold:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Stochastic Oversold",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.BUY,
-                confidence=0.65,
-                metadata={
-                    'k': float(current_k),
-                    'd': float(current_d),
-                    'zone': 'oversold',
-                    'crossover': None,
-                },
-                description=f"Stochastic oversold: K={current_k:.1f}, D={current_d:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Stochastic Oversold",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.BUY,
+                    confidence=0.65,
+                    metadata={
+                        "k": float(current_k),
+                        "d": float(current_d),
+                        "zone": "oversold",
+                        "crossover": None,
+                    },
+                    description=f"Stochastic oversold: K={current_k:.1f}, D={current_d:.1f}",
+                )
+            )
 
         # Overbought (no crossover yet)
         elif current_k > self.overbought:
-            patterns.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Stochastic Overbought",
-                pattern_type=PatternType.TECHNICAL_INDICATOR,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                signal=SignalType.SELL,
-                confidence=0.65,
-                metadata={
-                    'k': float(current_k),
-                    'd': float(current_d),
-                    'zone': 'overbought',
-                    'crossover': None,
-                },
-                description=f"Stochastic overbought: K={current_k:.1f}, D={current_d:.1f}"
-            ))
+            patterns.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Stochastic Overbought",
+                    pattern_type=PatternType.TECHNICAL_INDICATOR,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    signal=SignalType.SELL,
+                    confidence=0.65,
+                    metadata={
+                        "k": float(current_k),
+                        "d": float(current_d),
+                        "zone": "overbought",
+                        "crossover": None,
+                    },
+                    description=f"Stochastic overbought: K={current_k:.1f}, D={current_d:.1f}",
+                )
+            )
 
         return patterns
 
@@ -499,14 +520,14 @@ class StochasticPattern(Pattern):
         low: np.ndarray,
         close: np.ndarray,
         k_period: int,
-        d_period: int
+        d_period: int,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate Stochastic %K and %D."""
         k_values = []
 
         for i in range(k_period - 1, len(close)):
-            period_high = np.max(high[i-k_period+1:i+1])
-            period_low = np.min(low[i-k_period+1:i+1])
+            period_high = np.max(high[i - k_period + 1 : i + 1])
+            period_low = np.min(low[i - k_period + 1 : i + 1])
 
             if period_high == period_low:
                 k = 50.0
@@ -521,6 +542,6 @@ class StochasticPattern(Pattern):
         d_values = VectorizedIndicators.sma(k_values, d_period)
 
         # Align arrays
-        k_values = k_values[d_period-1:]
+        k_values = k_values[d_period - 1 :]
 
         return k_values, d_values

@@ -3,12 +3,14 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 
 
 class Timeframe(str, Enum):
     """Trading timeframes."""
+
     ONE_MINUTE = "1m"
     FIVE_MINUTES = "5m"
     FIFTEEN_MINUTES = "15m"
@@ -21,6 +23,7 @@ class Timeframe(str, Enum):
 
 class Exchange(str, Enum):
     """Supported exchanges."""
+
     BINANCE = "binance"
     COINBASE = "coinbase"
     KRAKEN = "kraken"
@@ -31,6 +34,7 @@ class Exchange(str, Enum):
 
 class PatternType(str, Enum):
     """Pattern categories."""
+
     TECHNICAL_INDICATOR = "technical_indicator"
     CHART_PATTERN = "chart_pattern"
     CANDLESTICK_PATTERN = "candlestick_pattern"
@@ -43,6 +47,7 @@ class PatternType(str, Enum):
 
 class SignalType(str, Enum):
     """Trading signals."""
+
     BUY = "buy"
     SELL = "sell"
     HOLD = "hold"
@@ -52,6 +57,7 @@ class SignalType(str, Enum):
 
 class Priority(str, Enum):
     """Alert priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -61,6 +67,7 @@ class Priority(str, Enum):
 @dataclass
 class MarketData:
     """Market data for a trading pair."""
+
     exchange: Exchange
     symbol: str
     timeframe: Timeframe
@@ -85,6 +92,7 @@ class MarketData:
 @dataclass
 class OHLCV:
     """OHLCV time series data."""
+
     timestamps: np.ndarray
     open: np.ndarray
     high: np.ndarray
@@ -98,18 +106,19 @@ class OHLCV:
     def to_dict(self) -> Dict[str, np.ndarray]:
         """Convert to dictionary format."""
         return {
-            'timestamp': self.timestamps,
-            'open': self.open,
-            'high': self.high,
-            'low': self.low,
-            'close': self.close,
-            'volume': self.volume,
+            "timestamp": self.timestamps,
+            "open": self.open,
+            "high": self.high,
+            "low": self.low,
+            "close": self.close,
+            "volume": self.volume,
         }
 
 
 @dataclass
 class PatternResult:
     """Result of pattern detection."""
+
     pattern_id: str
     pattern_name: str
     pattern_type: PatternType
@@ -136,6 +145,7 @@ class PatternResult:
 @dataclass
 class Alert:
     """Alert generated from pattern detection."""
+
     alert_id: str
     timestamp: datetime
     pattern_result: PatternResult
@@ -155,6 +165,7 @@ class Alert:
 @dataclass
 class AnalysisResult:
     """Comprehensive analysis result."""
+
     symbol: str
     timeframe: Timeframe
     timestamp: datetime
@@ -186,6 +197,7 @@ class AnalysisResult:
 @dataclass
 class ModelPrediction:
     """Machine learning model prediction."""
+
     model_name: str
     symbol: str
     timestamp: datetime
@@ -208,6 +220,7 @@ class ModelPrediction:
 @dataclass
 class BacktestResult:
     """Backtesting result for a strategy."""
+
     strategy_name: str
     start_date: datetime
     end_date: datetime

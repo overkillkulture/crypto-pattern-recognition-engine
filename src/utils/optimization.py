@@ -10,11 +10,11 @@ Lightweight, efficient tools for:
 
 import functools
 import hashlib
-import pickle
-import numpy as np
-from typing import Any, Callable, Optional, Tuple
-from collections import OrderedDict
 import time
+from collections import OrderedDict
+from typing import Any, Callable, Optional, Tuple
+
+import numpy as np
 
 
 class TTLCache:
@@ -111,6 +111,7 @@ def cached_pattern(ttl: float = 300.0):
             # expensive calculation
             return patterns
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -166,24 +167,21 @@ class RollingWindow:
     def get_array(self) -> np.ndarray:
         """Get ordered array of window values."""
         if not self.filled:
-            return self.buffer[:self.index]
+            return self.buffer[: self.index]
 
         # Return in correct order
-        return np.concatenate([
-            self.buffer[self.index:],
-            self.buffer[:self.index]
-        ])
+        return np.concatenate([self.buffer[self.index :], self.buffer[: self.index]])
 
     def mean(self) -> float:
         """Fast mean calculation."""
         if not self.filled:
-            return np.mean(self.buffer[:self.index])
+            return np.mean(self.buffer[: self.index])
         return np.mean(self.buffer)
 
     def std(self) -> float:
         """Fast std calculation."""
         if not self.filled:
-            return np.std(self.buffer[:self.index])
+            return np.std(self.buffer[: self.index])
         return np.std(self.buffer)
 
 
@@ -203,7 +201,7 @@ class VectorizedIndicators:
         """
         # Use convolution for speed
         weights = np.ones(period) / period
-        return np.convolve(prices, weights, mode='valid')
+        return np.convolve(prices, weights, mode="valid")
 
     @staticmethod
     def ema(prices: np.ndarray, period: int, adjust: bool = True) -> np.ndarray:
@@ -224,14 +222,14 @@ class VectorizedIndicators:
             # Adjusted calculation (faster)
             weights = (1 - alpha) ** np.arange(len(prices))
             weights /= weights.sum()
-            return np.convolve(prices[::-1], weights)[len(prices)-1::-1]
+            return np.convolve(prices[::-1], weights)[len(prices) - 1 :: -1]
         else:
             # Classic calculation
             ema = np.zeros_like(prices)
             ema[0] = prices[0]
 
             for i in range(1, len(prices)):
-                ema[i] = alpha * prices[i] + (1 - alpha) * ema[i-1]
+                ema[i] = alpha * prices[i] + (1 - alpha) * ema[i - 1]
 
             return ema
 
@@ -254,26 +252,28 @@ class VectorizedIndicators:
         avg_losses = np.zeros(len(deltas))
 
         # Initial averages
-        avg_gains[period-1] = np.mean(gains[:period])
-        avg_losses[period-1] = np.mean(losses[:period])
+        avg_gains[period - 1] = np.mean(gains[:period])
+        avg_losses[period - 1] = np.mean(losses[:period])
 
         # Smoothed averages
         alpha = 1.0 / period
         for i in range(period, len(deltas)):
-            avg_gains[i] = alpha * gains[i] + (1 - alpha) * avg_gains[i-1]
-            avg_losses[i] = alpha * losses[i] + (1 - alpha) * avg_losses[i-1]
+            avg_gains[i] = alpha * gains[i] + (1 - alpha) * avg_gains[i - 1]
+            avg_losses[i] = alpha * losses[i] + (1 - alpha) * avg_losses[i - 1]
 
         # Calculate RS and RSI
-        rs = np.divide(avg_gains, avg_losses,
-                       out=np.zeros_like(avg_gains),
-                       where=avg_losses!=0)
+        rs = np.divide(
+            avg_gains, avg_losses, out=np.zeros_like(avg_gains), where=avg_losses != 0
+        )
         rsi = 100 - (100 / (1 + rs))
 
         # Prepend NaN for first period
-        return np.concatenate([np.full(period, np.nan), rsi[period-1:]])
+        return np.concatenate([np.full(period, np.nan), rsi[period - 1 :]])
 
     @staticmethod
-    def bollinger_bands(prices: np.ndarray, period: int = 20, std_dev: float = 2.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def bollinger_bands(
+        prices: np.ndarray, period: int = 20, std_dev: float = 2.0
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Bollinger Bands (vectorized).
 
@@ -284,10 +284,9 @@ class VectorizedIndicators:
         middle = VectorizedIndicators.sma(prices, period)
 
         # Calculate rolling std
-        std = np.array([
-            np.std(prices[i:i+period])
-            for i in range(len(prices) - period + 1)
-        ])
+        std = np.array(
+            [np.std(prices[i : i + period]) for i in range(len(prices) - period + 1)]
+        )
 
         # Calculate bands
         upper = middle + (std * std_dev)
@@ -296,7 +295,9 @@ class VectorizedIndicators:
         return upper, middle, lower
 
     @staticmethod
-    def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
+    def atr(
+        high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14
+    ) -> np.ndarray:
         """
         Average True Range (vectorized).
 
@@ -407,8 +408,8 @@ class StreamingStats:
         self.n = 0
         self.mean = 0.0
         self.m2 = 0.0
-        self.min_val = float('inf')
-        self.max_val = float('-inf')
+        self.min_val = float("inf")
+        self.max_val = float("-inf")
 
     def update(self, value: float):
         """
@@ -463,7 +464,7 @@ def batch_process_patterns(patterns_list: list, batch_size: int = 32) -> list:
     results = []
 
     for i in range(0, len(patterns_list), batch_size):
-        batch = patterns_list[i:i+batch_size]
+        batch = patterns_list[i : i + batch_size]
         batch_results = [pattern() for pattern in batch]
         results.extend(batch_results)
 
@@ -551,16 +552,16 @@ def preallocate_results(n: int) -> list:
 
 # Export key functions
 __all__ = [
-    'TTLCache',
-    'cached_pattern',
-    'RollingWindow',
-    'VectorizedIndicators',
-    'MemoryPool',
-    'get_array',
-    'release_array',
-    'StreamingStats',
-    'batch_process_patterns',
-    'ProfileTimer',
-    'optimize_ohlcv_memory',
-    'preallocate_results',
+    "TTLCache",
+    "cached_pattern",
+    "RollingWindow",
+    "VectorizedIndicators",
+    "MemoryPool",
+    "get_array",
+    "release_array",
+    "StreamingStats",
+    "batch_process_patterns",
+    "ProfileTimer",
+    "optimize_ohlcv_memory",
+    "preallocate_results",
 ]

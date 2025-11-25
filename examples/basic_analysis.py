@@ -11,13 +11,13 @@ This example demonstrates how to:
 import asyncio
 from datetime import datetime
 
+from src.alerts.handlers import ConsoleAlertHandler
+from src.analysis.analyzer import MarketAnalyzer
 from src.core.engine import PatternRecognitionEngine
 from src.core.types import Exchange, Timeframe
 from src.data.provider import CryptoDataProvider
 from src.patterns.detector import TechnicalPatternDetector
-from src.patterns.technical import RSIPattern, MACDPattern
-from src.analysis.analyzer import MarketAnalyzer
-from src.alerts.handlers import ConsoleAlertHandler
+from src.patterns.technical import MACDPattern, RSIPattern
 from src.utils.config import get_default_config
 from src.utils.logger import setup_logger
 
@@ -29,9 +29,9 @@ async def main():
     config = get_default_config()
     setup_logger(config)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Crypto Pattern Recognition Engine - Basic Example")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     # 2. Initialize engine
     engine = PatternRecognitionEngine(config)
@@ -52,7 +52,7 @@ async def main():
 
     # 6. Setup alerts
     alert_handler = ConsoleAlertHandler()
-    await alert_handler.configure({'enabled': True})
+    await alert_handler.configure({"enabled": True})
     engine.add_alert_handler(alert_handler)
 
     # 7. Configure and analyze
@@ -64,7 +64,7 @@ async def main():
     print(f"Exchange: {exchange.value}")
     print(f"Timeframe: {timeframe.value}")
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("\n" + "-"*60 + "\n")
+    print("\n" + "-" * 60 + "\n")
 
     try:
         # Run analysis
@@ -95,10 +95,14 @@ async def main():
                 print()
 
             if result.support_levels:
-                print(f"💚 SUPPORT LEVELS: {', '.join(f'${x:,.2f}' for x in result.support_levels)}")
+                print(
+                    f"💚 SUPPORT LEVELS: {', '.join(f'${x:,.2f}' for x in result.support_levels)}"
+                )
 
             if result.resistance_levels:
-                print(f"🔴 RESISTANCE LEVELS: {', '.join(f'${x:,.2f}' for x in result.resistance_levels)}")
+                print(
+                    f"🔴 RESISTANCE LEVELS: {', '.join(f'${x:,.2f}' for x in result.resistance_levels)}"
+                )
 
             if result.insights:
                 print(f"\n💡 INSIGHTS:\n")
@@ -115,9 +119,9 @@ async def main():
         # Cleanup
         await data_provider.close()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Analysis complete!")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

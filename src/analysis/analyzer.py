@@ -1,18 +1,14 @@
 """Market analysis implementation."""
 
-from typing import List
-import numpy as np
 from datetime import datetime
+from typing import List
+
+import numpy as np
 from loguru import logger
 
 from src.core.interfaces import Analyzer
-from src.core.types import (
-    OHLCV,
-    PatternResult,
-    AnalysisResult,
-    Timeframe,
-    SignalType,
-)
+from src.core.types import (OHLCV, AnalysisResult, PatternResult, SignalType,
+                            Timeframe)
 
 
 class MarketAnalyzer(Analyzer):
@@ -66,9 +62,7 @@ class MarketAnalyzer(Analyzer):
         risk_score = self._calculate_risk_score(volatility, patterns)
 
         # Generate insights
-        insights = self._generate_insights(
-            trend, volatility, volume_profile, patterns
-        )
+        insights = self._generate_insights(trend, volatility, volume_profile, patterns)
 
         return AnalysisResult(
             symbol=symbol,
@@ -85,14 +79,13 @@ class MarketAnalyzer(Analyzer):
             risk_score=risk_score,
             insights=insights,
             metadata={
-                'num_patterns': len(patterns),
-                'price': float(data.close[-1]),
-            }
+                "num_patterns": len(patterns),
+                "price": float(data.close[-1]),
+            },
         )
 
     def _calculate_overall_signal(
-        self,
-        patterns: List[PatternResult]
+        self, patterns: List[PatternResult]
     ) -> tuple[SignalType, float]:
         """Calculate overall signal from all patterns."""
         if not patterns:
@@ -100,12 +93,14 @@ class MarketAnalyzer(Analyzer):
 
         # Weight signals by confidence
         buy_score = sum(
-            p.confidence for p in patterns
+            p.confidence
+            for p in patterns
             if p.signal in [SignalType.BUY, SignalType.STRONG_BUY]
         )
 
         sell_score = sum(
-            p.confidence for p in patterns
+            p.confidence
+            for p in patterns
             if p.signal in [SignalType.SELL, SignalType.STRONG_SELL]
         )
 
@@ -176,7 +171,7 @@ class MarketAnalyzer(Analyzer):
 
         # Take the lowest unique values
         support_levels = []
-        for low in sorted_lows[:num_levels * 2]:
+        for low in sorted_lows[: num_levels * 2]:
             if not support_levels or abs(low - support_levels[-1]) / low > 0.01:
                 support_levels.append(float(low))
             if len(support_levels) >= num_levels:
@@ -195,7 +190,7 @@ class MarketAnalyzer(Analyzer):
 
         # Take the highest unique values
         resistance_levels = []
-        for high in sorted_highs[:num_levels * 2]:
+        for high in sorted_highs[: num_levels * 2]:
             if not resistance_levels or abs(high - resistance_levels[-1]) / high > 0.01:
                 resistance_levels.append(float(high))
             if len(resistance_levels) >= num_levels:
@@ -204,9 +199,7 @@ class MarketAnalyzer(Analyzer):
         return resistance_levels
 
     def _calculate_risk_score(
-        self,
-        volatility: float,
-        patterns: List[PatternResult]
+        self, volatility: float, patterns: List[PatternResult]
     ) -> float:
         """Calculate risk score (0-1, higher = more risky)."""
         # Base risk on volatility
@@ -224,7 +217,7 @@ class MarketAnalyzer(Analyzer):
         trend: str,
         volatility: float,
         volume_profile: str,
-        patterns: List[PatternResult]
+        patterns: List[PatternResult],
     ) -> List[str]:
         """Generate human-readable insights."""
         insights = []

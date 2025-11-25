@@ -1,23 +1,24 @@
 """Performance optimization utilities."""
 
-import time
 import asyncio
 import functools
 import logging
-from typing import Callable, Any, Optional, Dict, List, TypeVar, Coroutine
+import threading
+import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from collections import OrderedDict
-import threading
+from typing import Any, Callable, Coroutine, Dict, List, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 # ============================================================================
 # Timing and Profiling
 # ============================================================================
+
 
 def timeit(func: Callable) -> Callable:
     """
@@ -28,6 +29,7 @@ def timeit(func: Callable) -> Callable:
         def slow_function():
             time.sleep(1)
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
@@ -48,6 +50,7 @@ def timeit_async(func: Callable) -> Callable:
         async def slow_async_function():
             await asyncio.sleep(1)
     """
+
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         start = time.perf_counter()
@@ -79,6 +82,7 @@ class PerformanceMonitor:
 
     def track(self, func: Callable) -> Callable:
         """Decorator to track function performance."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             start = time.perf_counter()
@@ -96,6 +100,7 @@ class PerformanceMonitor:
 
     def track_async(self, func: Callable) -> Callable:
         """Decorator to track async function performance."""
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             start = time.perf_counter()
@@ -119,18 +124,17 @@ class PerformanceMonitor:
 
             durations = self._metrics[func_name]
             return {
-                'count': len(durations),
-                'total': sum(durations),
-                'avg': sum(durations) / len(durations),
-                'min': min(durations),
-                'max': max(durations),
+                "count": len(durations),
+                "total": sum(durations),
+                "avg": sum(durations) / len(durations),
+                "min": min(durations),
+                "max": max(durations),
             }
 
     def get_all_stats(self) -> Dict[str, Dict[str, float]]:
         """Get statistics for all tracked functions."""
         return {
-            func_name: self.get_stats(func_name)
-            for func_name in self._metrics.keys()
+            func_name: self.get_stats(func_name) for func_name in self._metrics.keys()
         }
 
     def reset(self, func_name: Optional[str] = None):
@@ -145,6 +149,7 @@ class PerformanceMonitor:
 # ============================================================================
 # Caching
 # ============================================================================
+
 
 class LRUCache:
     """
@@ -238,6 +243,7 @@ def cached(cache: LRUCache, key_func: Optional[Callable] = None):
         def expensive_function(x, y):
             return x + y
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -265,6 +271,7 @@ def cached(cache: LRUCache, key_func: Optional[Callable] = None):
 # ============================================================================
 # Batch Processing
 # ============================================================================
+
 
 async def batch_process(
     items: List[T],
@@ -299,7 +306,7 @@ async def batch_process(
 
     # Process in batches
     for i in range(0, len(items), batch_size):
-        batch = items[i:i + batch_size]
+        batch = items[i : i + batch_size]
         batch_results = await asyncio.gather(
             *[process_with_semaphore(item) for item in batch],
             return_exceptions=True,
@@ -343,6 +350,7 @@ async def parallel_map(
 # ============================================================================
 # Rate Limiting
 # ============================================================================
+
 
 class RateLimiter:
     """
@@ -423,6 +431,7 @@ def rate_limited(rate: int, per: float = 1.0):
 # Retry Logic
 # ============================================================================
 
+
 async def retry_async(
     func: Callable[..., Coroutine[Any, Any, T]],
     *args,
@@ -463,7 +472,7 @@ async def retry_async(
         except exceptions as e:
             last_exception = e
             if attempt < max_attempts - 1:
-                sleep_time = delay * (backoff ** attempt)
+                sleep_time = delay * (backoff**attempt)
                 logger.warning(
                     f"Attempt {attempt + 1}/{max_attempts} failed: {e}. "
                     f"Retrying in {sleep_time:.2f}s..."
@@ -478,6 +487,7 @@ async def retry_async(
 # ============================================================================
 # Memory Management
 # ============================================================================
+
 
 class MemoryPool:
     """
@@ -515,7 +525,7 @@ class MemoryPool:
         with self._lock:
             if len(self._pool) < self.max_size:
                 # Clear object if it has a clear method
-                if hasattr(obj, 'clear'):
+                if hasattr(obj, "clear"):
                     obj.clear()
                 self._pool.append(obj)
 

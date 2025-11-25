@@ -1,16 +1,18 @@
 """Data validation and sanitization utilities."""
 
-import numpy as np
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict
+
+import numpy as np
 from loguru import logger
 
-from src.core.types import OHLCV, MarketData, PatternResult, Exchange, Timeframe
+from src.core.types import (OHLCV, Exchange, MarketData, PatternResult,
+                            Timeframe)
 
 
 class ValidationError(Exception):
     """Custom exception for validation errors."""
-    pass
+
 
 
 class DataValidator:
@@ -56,7 +58,7 @@ class DataValidator:
         arrays = [data.open, data.high, data.low, data.close, data.volume]
         for i, arr in enumerate(arrays):
             if np.any(np.isnan(arr)):
-                names = ['open', 'high', 'low', 'close', 'volume']
+                names = ["open", "high", "low", "close", "volume"]
                 raise ValidationError(f"NaN values found in {names[i]}")
 
         # Check for negative values
@@ -111,11 +113,11 @@ class DataValidator:
         valid_mask &= (data.open >= 0) & (data.close >= 0) & (data.volume >= 0)
 
         # Remove invalid OHLC relationships
-        valid_mask &= (data.high >= data.low)
-        valid_mask &= (data.high >= data.open)
-        valid_mask &= (data.high >= data.close)
-        valid_mask &= (data.low <= data.open)
-        valid_mask &= (data.low <= data.close)
+        valid_mask &= data.high >= data.low
+        valid_mask &= data.high >= data.open
+        valid_mask &= data.high >= data.close
+        valid_mask &= data.low <= data.open
+        valid_mask &= data.low <= data.close
 
         # Apply mask
         if not np.all(valid_mask):
@@ -189,10 +191,10 @@ class DataValidator:
         if not symbol or not isinstance(symbol, str):
             raise ValidationError(f"Invalid symbol: {symbol}")
 
-        if '/' not in symbol:
+        if "/" not in symbol:
             raise ValidationError(f"Symbol must contain '/': {symbol}")
 
-        parts = symbol.split('/')
+        parts = symbol.split("/")
         if len(parts) != 2:
             raise ValidationError(f"Symbol must be BASE/QUOTE format: {symbol}")
 
@@ -216,29 +218,29 @@ class DataValidator:
         Raises:
             ValidationError: If validation fails
         """
-        required_keys = ['exchanges', 'pairs', 'timeframes']
+        required_keys = ["exchanges", "pairs", "timeframes"]
 
         for key in required_keys:
             if key not in config:
                 raise ValidationError(f"Missing required config key: {key}")
 
         # Validate exchanges
-        if not config['exchanges']:
+        if not config["exchanges"]:
             raise ValidationError("No exchanges configured")
 
         # Validate pairs
-        if not config['pairs']:
+        if not config["pairs"]:
             raise ValidationError("No trading pairs configured")
 
-        for symbol in config['pairs']:
+        for symbol in config["pairs"]:
             DataValidator.validate_symbol(symbol)
 
         # Validate timeframes
-        if not config['timeframes']:
+        if not config["timeframes"]:
             raise ValidationError("No timeframes configured")
 
         valid_timeframes = [tf.value for tf in Timeframe]
-        for tf in config['timeframes']:
+        for tf in config["timeframes"]:
             if tf not in valid_timeframes:
                 raise ValidationError(f"Invalid timeframe: {tf}")
 

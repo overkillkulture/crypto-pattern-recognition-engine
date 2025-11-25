@@ -1,19 +1,14 @@
 """Chart pattern detection - comprehensive implementation."""
 
-from typing import List, Tuple, Optional
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List, Tuple
+
 import numpy as np
-from loguru import logger
 from scipy.signal import argrelextrema
 
 from src.core.interfaces import Pattern
-from src.core.types import (
-    OHLCV,
-    PatternResult,
-    PatternType,
-    SignalType,
-)
+from src.core.types import OHLCV, PatternResult, PatternType, SignalType
 
 
 class ChartPattern(Pattern):
@@ -22,7 +17,9 @@ class ChartPattern(Pattern):
     def __init__(self):
         super().__init__()
 
-    def find_peaks_valleys(self, prices: np.ndarray, order: int = 5) -> Tuple[np.ndarray, np.ndarray]:
+    def find_peaks_valleys(
+        self, prices: np.ndarray, order: int = 5
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Find peaks and valleys in price data."""
         peaks = argrelextrema(prices, np.greater, order=order)[0]
         valleys = argrelextrema(prices, np.less, order=order)[0]
@@ -57,9 +54,13 @@ class HeadAndShouldersPattern(ChartPattern):
             right_shoulder = peaks[i + 2]
 
             # Head should be higher than both shoulders
-            if (data.close[head] > data.close[left_shoulder] and
-                data.close[head] > data.close[right_shoulder] and
-                abs(data.close[left_shoulder] - data.close[right_shoulder]) / data.close[head] < 0.05):
+            if (
+                data.close[head] > data.close[left_shoulder]
+                and data.close[head] > data.close[right_shoulder]
+                and abs(data.close[left_shoulder] - data.close[right_shoulder])
+                / data.close[head]
+                < 0.05
+            ):
 
                 # Calculate neckline
                 neckline = min(data.close[left_shoulder], data.close[right_shoulder])
@@ -67,23 +68,27 @@ class HeadAndShouldersPattern(ChartPattern):
                 # If price recently broke neckline, it's a confirmed pattern
                 current_price = data.close[-1]
                 if current_price < neckline * 0.98:
-                    results.append(PatternResult(
-                        pattern_id=str(uuid.uuid4()),
-                        pattern_name="Head and Shoulders",
-                        pattern_type=PatternType.CHART_PATTERN,
-                        symbol="",
-                        timeframe=None,
-                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                        confidence=0.85,
-                        signal=SignalType.STRONG_SELL,
-                        metadata={
-                            'pattern': 'head_and_shoulders',
-                            'neckline': float(neckline),
-                            'head_price': float(data.close[head]),
-                        },
-                        description="Head and Shoulders pattern - bearish reversal",
-                        target_price=float(neckline - (data.close[head] - neckline)),
-                    ))
+                    results.append(
+                        PatternResult(
+                            pattern_id=str(uuid.uuid4()),
+                            pattern_name="Head and Shoulders",
+                            pattern_type=PatternType.CHART_PATTERN,
+                            symbol="",
+                            timeframe=None,
+                            timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                            confidence=0.85,
+                            signal=SignalType.STRONG_SELL,
+                            metadata={
+                                "pattern": "head_and_shoulders",
+                                "neckline": float(neckline),
+                                "head_price": float(data.close[head]),
+                            },
+                            description="Head and Shoulders pattern - bearish reversal",
+                            target_price=float(
+                                neckline - (data.close[head] - neckline)
+                            ),
+                        )
+                    )
 
         # Check for Inverse Head and Shoulders
         if len(valleys) < 3:
@@ -95,31 +100,39 @@ class HeadAndShouldersPattern(ChartPattern):
             right_shoulder = valleys[i + 2]
 
             # Head should be lower than both shoulders
-            if (data.close[head] < data.close[left_shoulder] and
-                data.close[head] < data.close[right_shoulder] and
-                abs(data.close[left_shoulder] - data.close[right_shoulder]) / data.close[head] < 0.05):
+            if (
+                data.close[head] < data.close[left_shoulder]
+                and data.close[head] < data.close[right_shoulder]
+                and abs(data.close[left_shoulder] - data.close[right_shoulder])
+                / data.close[head]
+                < 0.05
+            ):
 
                 neckline = max(data.close[left_shoulder], data.close[right_shoulder])
                 current_price = data.close[-1]
 
                 if current_price > neckline * 1.02:
-                    results.append(PatternResult(
-                        pattern_id=str(uuid.uuid4()),
-                        pattern_name="Inverse Head and Shoulders",
-                        pattern_type=PatternType.CHART_PATTERN,
-                        symbol="",
-                        timeframe=None,
-                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                        confidence=0.85,
-                        signal=SignalType.STRONG_BUY,
-                        metadata={
-                            'pattern': 'inverse_head_and_shoulders',
-                            'neckline': float(neckline),
-                            'head_price': float(data.close[head]),
-                        },
-                        description="Inverse Head and Shoulders - bullish reversal",
-                        target_price=float(neckline + (neckline - data.close[head])),
-                    ))
+                    results.append(
+                        PatternResult(
+                            pattern_id=str(uuid.uuid4()),
+                            pattern_name="Inverse Head and Shoulders",
+                            pattern_type=PatternType.CHART_PATTERN,
+                            symbol="",
+                            timeframe=None,
+                            timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                            confidence=0.85,
+                            signal=SignalType.STRONG_BUY,
+                            metadata={
+                                "pattern": "inverse_head_and_shoulders",
+                                "neckline": float(neckline),
+                                "head_price": float(data.close[head]),
+                            },
+                            description="Inverse Head and Shoulders - bullish reversal",
+                            target_price=float(
+                                neckline + (neckline - data.close[head])
+                            ),
+                        )
+                    )
 
         return results
 
@@ -159,51 +172,57 @@ class TrianglePattern(ChartPattern):
             resistance = np.max(highs)
 
             if current_price >= resistance * 0.99:
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Ascending Triangle Breakout",
-                    pattern_type=PatternType.CHART_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.78,
-                    signal=SignalType.BUY,
-                    metadata={'pattern': 'ascending_triangle'},
-                    description="Ascending Triangle breakout - bullish continuation",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Ascending Triangle Breakout",
+                        pattern_type=PatternType.CHART_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.78,
+                        signal=SignalType.BUY,
+                        metadata={"pattern": "ascending_triangle"},
+                        description="Ascending Triangle breakout - bullish continuation",
+                    )
+                )
 
         # Descending Triangle: falling resistance, flat support
         elif high_trend < -0.001 and abs(low_trend) < 0.001:
             support = np.min(lows)
 
             if current_price <= support * 1.01:
-                results.append(PatternResult(
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Descending Triangle Breakdown",
+                        pattern_type=PatternType.CHART_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.78,
+                        signal=SignalType.SELL,
+                        metadata={"pattern": "descending_triangle"},
+                        description="Descending Triangle breakdown - bearish continuation",
+                    )
+                )
+
+        # Symmetrical Triangle: converging lines
+        elif high_trend < -0.001 and low_trend > 0.001:
+            results.append(
+                PatternResult(
                     pattern_id=str(uuid.uuid4()),
-                    pattern_name="Descending Triangle Breakdown",
+                    pattern_name="Symmetrical Triangle",
                     pattern_type=PatternType.CHART_PATTERN,
                     symbol="",
                     timeframe=None,
                     timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.78,
-                    signal=SignalType.SELL,
-                    metadata={'pattern': 'descending_triangle'},
-                    description="Descending Triangle breakdown - bearish continuation",
-                ))
-
-        # Symmetrical Triangle: converging lines
-        elif high_trend < -0.001 and low_trend > 0.001:
-            results.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Symmetrical Triangle",
-                pattern_type=PatternType.CHART_PATTERN,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                confidence=0.70,
-                signal=SignalType.HOLD,
-                metadata={'pattern': 'symmetrical_triangle'},
-                description="Symmetrical Triangle - consolidation, breakout pending",
-            ))
+                    confidence=0.70,
+                    signal=SignalType.HOLD,
+                    metadata={"pattern": "symmetrical_triangle"},
+                    description="Symmetrical Triangle - consolidation, breakout pending",
+                )
+            )
 
         return results
 
@@ -236,7 +255,9 @@ class DoubleTopBottomPattern(ChartPattern):
                 peak2 = peaks[i + 1]
 
                 # Peaks should be at similar levels
-                price_diff = abs(data.close[peak1] - data.close[peak2]) / data.close[peak1]
+                price_diff = (
+                    abs(data.close[peak1] - data.close[peak2]) / data.close[peak1]
+                )
 
                 if price_diff < 0.03:  # Within 3%
                     # Find valley between peaks
@@ -249,23 +270,29 @@ class DoubleTopBottomPattern(ChartPattern):
 
                         # Confirm breakdown below neckline
                         if current_price < neckline * 0.98:
-                            results.append(PatternResult(
-                                pattern_id=str(uuid.uuid4()),
-                                pattern_name="Double Top",
-                                pattern_type=PatternType.CHART_PATTERN,
-                                symbol="",
-                                timeframe=None,
-                                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                                confidence=0.82,
-                                signal=SignalType.SELL,
-                                metadata={
-                                    'pattern': 'double_top',
-                                    'neckline': float(neckline),
-                                    'peak_price': float(data.close[peak1]),
-                                },
-                                description="Double Top - bearish reversal",
-                                target_price=float(neckline - (data.close[peak1] - neckline)),
-                            ))
+                            results.append(
+                                PatternResult(
+                                    pattern_id=str(uuid.uuid4()),
+                                    pattern_name="Double Top",
+                                    pattern_type=PatternType.CHART_PATTERN,
+                                    symbol="",
+                                    timeframe=None,
+                                    timestamp=datetime.fromtimestamp(
+                                        data.timestamps[-1]
+                                    ),
+                                    confidence=0.82,
+                                    signal=SignalType.SELL,
+                                    metadata={
+                                        "pattern": "double_top",
+                                        "neckline": float(neckline),
+                                        "peak_price": float(data.close[peak1]),
+                                    },
+                                    description="Double Top - bearish reversal",
+                                    target_price=float(
+                                        neckline - (data.close[peak1] - neckline)
+                                    ),
+                                )
+                            )
 
         # Double Bottom
         if len(valleys) >= 2:
@@ -273,7 +300,9 @@ class DoubleTopBottomPattern(ChartPattern):
                 valley1 = valleys[i]
                 valley2 = valleys[i + 1]
 
-                price_diff = abs(data.close[valley1] - data.close[valley2]) / data.close[valley1]
+                price_diff = (
+                    abs(data.close[valley1] - data.close[valley2]) / data.close[valley1]
+                )
 
                 if price_diff < 0.03:
                     peaks_between = [p for p in peaks if valley1 < p < valley2]
@@ -284,23 +313,29 @@ class DoubleTopBottomPattern(ChartPattern):
                         current_price = data.close[-1]
 
                         if current_price > neckline * 1.02:
-                            results.append(PatternResult(
-                                pattern_id=str(uuid.uuid4()),
-                                pattern_name="Double Bottom",
-                                pattern_type=PatternType.CHART_PATTERN,
-                                symbol="",
-                                timeframe=None,
-                                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                                confidence=0.82,
-                                signal=SignalType.BUY,
-                                metadata={
-                                    'pattern': 'double_bottom',
-                                    'neckline': float(neckline),
-                                    'bottom_price': float(data.close[valley1]),
-                                },
-                                description="Double Bottom - bullish reversal",
-                                target_price=float(neckline + (neckline - data.close[valley1])),
-                            ))
+                            results.append(
+                                PatternResult(
+                                    pattern_id=str(uuid.uuid4()),
+                                    pattern_name="Double Bottom",
+                                    pattern_type=PatternType.CHART_PATTERN,
+                                    symbol="",
+                                    timeframe=None,
+                                    timestamp=datetime.fromtimestamp(
+                                        data.timestamps[-1]
+                                    ),
+                                    confidence=0.82,
+                                    signal=SignalType.BUY,
+                                    metadata={
+                                        "pattern": "double_bottom",
+                                        "neckline": float(neckline),
+                                        "bottom_price": float(data.close[valley1]),
+                                    },
+                                    description="Double Bottom - bullish reversal",
+                                    target_price=float(
+                                        neckline + (neckline - data.close[valley1])
+                                    ),
+                                )
+                            )
 
         return results
 
@@ -343,19 +378,21 @@ class FlagPattern(ChartPattern):
                 breakout_level = data.close[pole_end]
 
                 if current_price >= breakout_level * 0.99:
-                    results.append(PatternResult(
-                        pattern_id=str(uuid.uuid4()),
-                        pattern_name="Bull Flag Breakout",
-                        pattern_type=PatternType.CHART_PATTERN,
-                        symbol="",
-                        timeframe=None,
-                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                        confidence=0.80,
-                        signal=SignalType.BUY,
-                        metadata={'pattern': 'bull_flag'},
-                        description="Bull Flag breakout - bullish continuation",
-                        target_price=float(current_price + abs(pole_move)),
-                    ))
+                    results.append(
+                        PatternResult(
+                            pattern_id=str(uuid.uuid4()),
+                            pattern_name="Bull Flag Breakout",
+                            pattern_type=PatternType.CHART_PATTERN,
+                            symbol="",
+                            timeframe=None,
+                            timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                            confidence=0.80,
+                            signal=SignalType.BUY,
+                            metadata={"pattern": "bull_flag"},
+                            description="Bull Flag breakout - bullish continuation",
+                            target_price=float(current_price + abs(pole_move)),
+                        )
+                    )
 
         # Bear Flag: strong downtrend (pole) + slight upward consolidation (flag)
         elif pole_pct < -0.10:  # At least 10% downtrend
@@ -367,19 +404,21 @@ class FlagPattern(ChartPattern):
                 breakdown_level = data.close[pole_end]
 
                 if current_price <= breakdown_level * 1.01:
-                    results.append(PatternResult(
-                        pattern_id=str(uuid.uuid4()),
-                        pattern_name="Bear Flag Breakdown",
-                        pattern_type=PatternType.CHART_PATTERN,
-                        symbol="",
-                        timeframe=None,
-                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                        confidence=0.80,
-                        signal=SignalType.SELL,
-                        metadata={'pattern': 'bear_flag'},
-                        description="Bear Flag breakdown - bearish continuation",
-                        target_price=float(current_price - abs(pole_move)),
-                    ))
+                    results.append(
+                        PatternResult(
+                            pattern_id=str(uuid.uuid4()),
+                            pattern_name="Bear Flag Breakdown",
+                            pattern_type=PatternType.CHART_PATTERN,
+                            symbol="",
+                            timeframe=None,
+                            timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                            confidence=0.80,
+                            signal=SignalType.SELL,
+                            metadata={"pattern": "bear_flag"},
+                            description="Bear Flag breakdown - bearish continuation",
+                            target_price=float(current_price - abs(pole_move)),
+                        )
+                    )
 
         return results
 
@@ -417,36 +456,44 @@ class WedgePattern(ChartPattern):
             upper_line = recent_highs[-1]
 
             if current_price < upper_line * 0.95:
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Rising Wedge Breakdown",
-                    pattern_type=PatternType.CHART_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.75,
-                    signal=SignalType.SELL,
-                    metadata={'pattern': 'rising_wedge'},
-                    description="Rising Wedge breakdown - bearish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Rising Wedge Breakdown",
+                        pattern_type=PatternType.CHART_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.75,
+                        signal=SignalType.SELL,
+                        metadata={"pattern": "rising_wedge"},
+                        description="Rising Wedge breakdown - bearish reversal",
+                    )
+                )
 
         # Falling Wedge: both lines falling, bullish reversal
-        elif high_trend < -0.001 and low_trend < -0.001 and abs(low_trend) > abs(high_trend) * 0.7:
+        elif (
+            high_trend < -0.001
+            and low_trend < -0.001
+            and abs(low_trend) > abs(high_trend) * 0.7
+        ):
             lower_line = recent_lows[-1]
 
             if current_price > lower_line * 1.05:
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Falling Wedge Breakout",
-                    pattern_type=PatternType.CHART_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=0.75,
-                    signal=SignalType.BUY,
-                    metadata={'pattern': 'falling_wedge'},
-                    description="Falling Wedge breakout - bullish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Falling Wedge Breakout",
+                        pattern_type=PatternType.CHART_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=0.75,
+                        signal=SignalType.BUY,
+                        metadata={"pattern": "falling_wedge"},
+                        description="Falling Wedge breakout - bullish reversal",
+                    )
+                )
 
         return results
 
@@ -508,7 +555,9 @@ class CupAndHandlePattern(ChartPattern):
             right_peak_idx = cup_peaks[i + 1]
 
             # Find valleys between these peaks
-            between_valleys = cup_valleys[(cup_valleys > left_peak_idx) & (cup_valleys < right_peak_idx)]
+            between_valleys = cup_valleys[
+                (cup_valleys > left_peak_idx) & (cup_valleys < right_peak_idx)
+            ]
 
             if len(between_valleys) == 0:
                 continue
@@ -538,7 +587,7 @@ class CupAndHandlePattern(ChartPattern):
             if handle_length < 5 or handle_length > 20:
                 continue
 
-            handle_prices = recent_closes[handle_start:handle_end + 1]
+            handle_prices = recent_closes[handle_start : handle_end + 1]
             handle_high = np.max(handle_prices)
             handle_low = np.min(handle_prices)
             handle_depth = (handle_high - handle_low) / handle_high
@@ -563,28 +612,30 @@ class CupAndHandlePattern(ChartPattern):
                 signal = SignalType.HOLD
                 confidence = 0.75
 
-            results.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Cup and Handle",
-                pattern_type=PatternType.CHART_PATTERN,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                confidence=confidence,
-                signal=signal,
-                entry_price=breakout_level * 1.01,
-                target_price=breakout_level + (breakout_level - valley_price),
-                stop_loss=handle_low * 0.98,
-                metadata={
-                    'cup_depth': float(cup_depth),
-                    'handle_depth': float(handle_depth),
-                    'breakout_level': float(breakout_level),
-                    'cup_left_rim': float(left_peak),
-                    'cup_right_rim': float(right_peak),
-                    'cup_bottom': float(valley_price),
-                },
-                description=f"Cup and Handle pattern - breakout at ${breakout_level:.2f}",
-            ))
+            results.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Cup and Handle",
+                    pattern_type=PatternType.CHART_PATTERN,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    confidence=confidence,
+                    signal=signal,
+                    entry_price=breakout_level * 1.01,
+                    target_price=breakout_level + (breakout_level - valley_price),
+                    stop_loss=handle_low * 0.98,
+                    metadata={
+                        "cup_depth": float(cup_depth),
+                        "handle_depth": float(handle_depth),
+                        "breakout_level": float(breakout_level),
+                        "cup_left_rim": float(left_peak),
+                        "cup_right_rim": float(right_peak),
+                        "cup_bottom": float(valley_price),
+                    },
+                    description=f"Cup and Handle pattern - breakout at ${breakout_level:.2f}",
+                )
+            )
 
         return results
 
@@ -650,8 +701,14 @@ class RectanglePattern(ChartPattern):
             price_position = (current_price - support) / (resistance - support)
 
             # Determine trend before rectangle (for continuation direction)
-            pre_rect_closes = closes[-lookback - 20:-lookback] if len(closes) >= lookback + 20 else closes[:lookback//2]
-            trend_direction = "up" if pre_rect_closes[-1] > pre_rect_closes[0] else "down"
+            pre_rect_closes = (
+                closes[-lookback - 20 : -lookback]
+                if len(closes) >= lookback + 20
+                else closes[: lookback // 2]
+            )
+            trend_direction = (
+                "up" if pre_rect_closes[-1] > pre_rect_closes[0] else "down"
+            )
 
             confidence = 0.70
             signal = SignalType.HOLD
@@ -675,32 +732,44 @@ class RectanglePattern(ChartPattern):
 
             # Calculate target based on range height
             range_height = resistance - support
-            target_price = resistance + range_height if signal == SignalType.BUY else support - range_height
-            stop_loss = support * 0.98 if signal == SignalType.BUY else resistance * 1.02
+            target_price = (
+                resistance + range_height
+                if signal == SignalType.BUY
+                else support - range_height
+            )
+            stop_loss = (
+                support * 0.98 if signal == SignalType.BUY else resistance * 1.02
+            )
 
-            results.append(PatternResult(
-                pattern_id=str(uuid.uuid4()),
-                pattern_name="Rectangle Consolidation",
-                pattern_type=PatternType.CHART_PATTERN,
-                symbol="",
-                timeframe=None,
-                timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                confidence=confidence,
-                signal=signal,
-                entry_price=resistance * 1.005 if trend_direction == "up" else support * 0.995,
-                target_price=target_price,
-                stop_loss=stop_loss,
-                metadata={
-                    'resistance': float(resistance),
-                    'support': float(support),
-                    'range_width_pct': float(range_width * 100),
-                    'resistance_touches': int(resistance_touches),
-                    'support_touches': int(support_touches),
-                    'prior_trend': trend_direction,
-                    'price_position_pct': float(price_position * 100),
-                },
-                description=f"Rectangle pattern: ${support:.2f} - ${resistance:.2f} range",
-            ))
+            results.append(
+                PatternResult(
+                    pattern_id=str(uuid.uuid4()),
+                    pattern_name="Rectangle Consolidation",
+                    pattern_type=PatternType.CHART_PATTERN,
+                    symbol="",
+                    timeframe=None,
+                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                    confidence=confidence,
+                    signal=signal,
+                    entry_price=(
+                        resistance * 1.005
+                        if trend_direction == "up"
+                        else support * 0.995
+                    ),
+                    target_price=target_price,
+                    stop_loss=stop_loss,
+                    metadata={
+                        "resistance": float(resistance),
+                        "support": float(support),
+                        "range_width_pct": float(range_width * 100),
+                        "resistance_touches": int(resistance_touches),
+                        "support_touches": int(support_touches),
+                        "prior_trend": trend_direction,
+                        "price_position_pct": float(price_position * 100),
+                    },
+                    description=f"Rectangle pattern: ${support:.2f} - ${resistance:.2f} range",
+                )
+            )
 
             break  # Only report one rectangle
 
@@ -762,7 +831,7 @@ class DiamondPattern(ChartPattern):
         # Second half: contracting (narrowing peaks and valleys)
 
         for i in range(len(recent_peaks) - 2):
-            p1, p2, p3 = recent_peaks[i:i+3]
+            p1, p2, p3 = recent_peaks[i : i + 3]
 
             # Find corresponding valleys
             v_between_12 = recent_valleys[(recent_valleys > p1) & (recent_valleys < p2)]
@@ -813,31 +882,45 @@ class DiamondPattern(ChartPattern):
                     confidence = 0.70
 
                 diamond_height = peak2_price - min(valley1_price, valley2_price)
-                target_price = valley2_price - diamond_height if signal == SignalType.SELL else peak2_price + diamond_height
+                target_price = (
+                    valley2_price - diamond_height
+                    if signal == SignalType.SELL
+                    else peak2_price + diamond_height
+                )
 
-                results.append(PatternResult(
-                    pattern_id=str(uuid.uuid4()),
-                    pattern_name="Diamond Pattern",
-                    pattern_type=PatternType.CHART_PATTERN,
-                    symbol="",
-                    timeframe=None,
-                    timestamp=datetime.fromtimestamp(data.timestamps[-1]),
-                    confidence=confidence,
-                    signal=signal,
-                    entry_price=valley2_price * 0.99 if signal == SignalType.SELL else peak2_price * 1.01,
-                    target_price=target_price,
-                    stop_loss=peak2_price * 1.02 if signal == SignalType.SELL else valley2_price * 0.98,
-                    metadata={
-                        'peak1': float(peak1_price),
-                        'peak2': float(peak2_price),
-                        'peak3': float(peak3_price),
-                        'valley1': float(valley1_price),
-                        'valley2': float(valley2_price),
-                        'diamond_height': float(diamond_height),
-                        'prior_trend': pre_diamond_trend,
-                    },
-                    description=f"Diamond reversal pattern - typical bearish reversal",
-                ))
+                results.append(
+                    PatternResult(
+                        pattern_id=str(uuid.uuid4()),
+                        pattern_name="Diamond Pattern",
+                        pattern_type=PatternType.CHART_PATTERN,
+                        symbol="",
+                        timeframe=None,
+                        timestamp=datetime.fromtimestamp(data.timestamps[-1]),
+                        confidence=confidence,
+                        signal=signal,
+                        entry_price=(
+                            valley2_price * 0.99
+                            if signal == SignalType.SELL
+                            else peak2_price * 1.01
+                        ),
+                        target_price=target_price,
+                        stop_loss=(
+                            peak2_price * 1.02
+                            if signal == SignalType.SELL
+                            else valley2_price * 0.98
+                        ),
+                        metadata={
+                            "peak1": float(peak1_price),
+                            "peak2": float(peak2_price),
+                            "peak3": float(peak3_price),
+                            "valley1": float(valley1_price),
+                            "valley2": float(valley2_price),
+                            "diamond_height": float(diamond_height),
+                            "prior_trend": pre_diamond_trend,
+                        },
+                        description=f"Diamond reversal pattern - typical bearish reversal",
+                    )
+                )
 
         return results
 

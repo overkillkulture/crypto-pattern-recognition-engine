@@ -10,22 +10,18 @@ This example demonstrates:
 """
 
 import asyncio
-from datetime import datetime
 
 from src.core.engine import PatternRecognitionEngine
-from src.core.types import Exchange, Timeframe, PatternType
+from src.core.types import Exchange, PatternType, Timeframe
 from src.data.provider import CryptoDataProvider
-from src.patterns.detector import TechnicalPatternDetector
-from src.patterns.technical import *
 from src.patterns.candlestick import CandlestickPatternDetector
 from src.patterns.chart import *
-from src.patterns.combinations import (
-    PatternCombiner,
-    ConsensusStrategy,
-    WeightedStrategy,
-    ConfirmationStrategy,
-    TimeframeConfluenceStrategy,
-)
+from src.patterns.combinations import (ConfirmationStrategy, ConsensusStrategy,
+                                       PatternCombiner,
+                                       TimeframeConfluenceStrategy,
+                                       WeightedStrategy)
+from src.patterns.detector import TechnicalPatternDetector
+from src.patterns.technical import *
 from src.utils.config import get_default_config
 from src.utils.logger import setup_logger
 
@@ -58,8 +54,12 @@ async def analyze_with_combinations(
 
         print(f"📊 Detected {len(patterns)} patterns")
         print(f"\nPattern breakdown:")
-        technical = [p for p in patterns if p.pattern_type == PatternType.TECHNICAL_INDICATOR]
-        candlestick = [p for p in patterns if p.pattern_type == PatternType.CANDLESTICK_PATTERN]
+        technical = [
+            p for p in patterns if p.pattern_type == PatternType.TECHNICAL_INDICATOR
+        ]
+        candlestick = [
+            p for p in patterns if p.pattern_type == PatternType.CANDLESTICK_PATTERN
+        ]
         chart = [p for p in patterns if p.pattern_type == PatternType.CHART_PATTERN]
 
         print(f"  • Technical Indicators: {len(technical)}")
@@ -88,7 +88,9 @@ async def analyze_with_combinations(
             print(f"   ✓ Signal: {consensus_signal.signal.value.upper()}")
             print(f"   ✓ Confidence: {consensus_signal.confidence:.2%}")
             print(f"   ✓ Reasoning: {consensus_signal.reasoning}")
-            print(f"   ✓ Contributing patterns: {len(consensus_signal.contributing_patterns)}")
+            print(
+                f"   ✓ Contributing patterns: {len(consensus_signal.contributing_patterns)}"
+            )
         else:
             print("   ✗ No consensus signal")
 
@@ -130,7 +132,9 @@ async def analyze_with_combinations(
             print(f"   ✓ Signal: {confirmation_signal.signal.value.upper()}")
             print(f"   ✓ Confidence: {confirmation_signal.confidence:.2%}")
             print(f"   ✓ Reasoning: {confirmation_signal.reasoning}")
-            print(f"   ✓ Required types confirmed: {confirmation_signal.metadata['required_types']}")
+            print(
+                f"   ✓ Required types confirmed: {confirmation_signal.metadata['required_types']}"
+            )
         else:
             print("   ✗ No confirmation signal (missing required pattern types)")
 
@@ -167,7 +171,9 @@ async def analyze_with_combinations(
             print(f"Signal: {meta_consensus.signal.value.upper()}")
             print(f"Confidence: {meta_consensus.confidence:.2%}")
             print(f"Reasoning: {meta_consensus.reasoning}")
-            print(f"Agreeing strategies: {meta_consensus.metadata['agreeing_strategies']}\n")
+            print(
+                f"Agreeing strategies: {meta_consensus.metadata['agreeing_strategies']}\n"
+            )
         else:
             print("⚠️  No meta consensus - strategies disagree\n")
 
@@ -189,6 +195,7 @@ async def analyze_with_combinations(
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -267,9 +274,9 @@ async def main():
     config = get_default_config()
     setup_logger(config)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("ADVANCED PATTERN COMBINATION STRATEGIES")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Initialize engine
     engine = PatternRecognitionEngine(config)

@@ -5,10 +5,10 @@ This module handles the encoding/decoding of patterns across the Nexus boundary,
 preserving semantic meaning while adapting to different processing modalities.
 """
 
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
-import numpy as np
+from typing import Any, Dict, List, Optional
+
 
 from src.core.types import PatternResult, SignalType
 
@@ -21,6 +21,7 @@ class HolisticPattern:
     This is a forward-compatible stub that will interface with
     consciousness-revolution patterns when available.
     """
+
     pattern_type: str
     state: str  # e.g., "expanding", "contracting", "stable", "transforming"
     coherence: float  # 0.0-1.0, similar to confidence but context-aware
@@ -32,14 +33,14 @@ class HolisticPattern:
     def to_dict(self) -> Dict:
         """Export for cross-repository communication."""
         return {
-            'type': 'holistic',
-            'pattern': self.pattern_type,
-            'state': self.state,
-            'coherence': self.coherence,
-            'timestamp': self.timestamp.isoformat(),
-            'trajectory': self.trajectory,
-            'dimension': self.dimension,
-            'metadata': self.metadata,
+            "type": "holistic",
+            "pattern": self.pattern_type,
+            "state": self.state,
+            "coherence": self.coherence,
+            "timestamp": self.timestamp.isoformat(),
+            "trajectory": self.trajectory,
+            "dimension": self.dimension,
+            "metadata": self.metadata,
         }
 
 
@@ -62,9 +63,7 @@ class PatternBridge:
         self.translation_history: List[Dict] = []
 
     def analytical_to_holistic(
-        self,
-        pattern: PatternResult,
-        context: Optional[Dict] = None
+        self, pattern: PatternResult, context: Optional[Dict] = None
     ) -> HolisticPattern:
         """
         Encode analytical pattern as holistic consciousness state.
@@ -112,21 +111,19 @@ class PatternBridge:
             dimension=dimension,
             metadata={
                 **pattern.metadata,
-                'source': 'analytical',
-                'original_signal': pattern.signal.value,
-                'original_confidence': pattern.confidence,
-            }
+                "source": "analytical",
+                "original_signal": pattern.signal.value,
+                "original_confidence": pattern.confidence,
+            },
         )
 
         # Record translation
-        self._record_translation('a_to_h', pattern, holistic)
+        self._record_translation("a_to_h", pattern, holistic)
 
         return holistic
 
     def holistic_to_analytical(
-        self,
-        holistic: HolisticPattern,
-        context: Optional[Dict] = None
+        self, holistic: HolisticPattern, context: Optional[Dict] = None
     ) -> PatternResult:
         """
         Decode holistic consciousness state as analytical pattern.
@@ -158,8 +155,9 @@ class PatternBridge:
         confidence = self._adjust_confidence(holistic.coherence, context)
 
         # Create analytical pattern
-        from src.core.types import PatternType
         import uuid
+
+        from src.core.types import PatternType
 
         analytical = PatternResult(
             pattern_id=str(uuid.uuid4()),
@@ -172,24 +170,22 @@ class PatternBridge:
             confidence=confidence,
             metadata={
                 **holistic.metadata,
-                'source': 'holistic',
-                'original_state': holistic.state,
-                'original_coherence': holistic.coherence,
-                'trajectory': holistic.trajectory,
-                'dimension': holistic.dimension,
+                "source": "holistic",
+                "original_state": holistic.state,
+                "original_coherence": holistic.coherence,
+                "trajectory": holistic.trajectory,
+                "dimension": holistic.dimension,
             },
-            description=f"Consciousness pattern: {holistic.state} ({holistic.trajectory})"
+            description=f"Consciousness pattern: {holistic.state} ({holistic.trajectory})",
         )
 
         # Record translation
-        self._record_translation('h_to_a', holistic, analytical)
+        self._record_translation("h_to_a", holistic, analytical)
 
         return analytical
 
     def measure_coherence(
-        self,
-        analytical: PatternResult,
-        holistic: HolisticPattern
+        self, analytical: PatternResult, holistic: HolisticPattern
     ) -> float:
         """
         Measure coherence between analytical and holistic representations.
@@ -206,8 +202,7 @@ class PatternBridge:
         """
         # Check signal/state alignment
         signal_state_coherence = self._check_signal_state_alignment(
-            analytical.signal,
-            holistic.state
+            analytical.signal, holistic.state
         )
 
         # Check confidence/coherence alignment
@@ -219,9 +214,9 @@ class PatternBridge:
 
         # Weighted average
         coherence = (
-            signal_state_coherence * 0.5 +
-            confidence_coherence * 0.3 +
-            temporal_coherence * 0.2
+            signal_state_coherence * 0.5
+            + confidence_coherence * 0.3
+            + temporal_coherence * 0.2
         )
 
         return coherence
@@ -239,50 +234,38 @@ class PatternBridge:
         """Infer consciousness dimension from pattern type."""
         pattern_name = pattern.pattern_name.lower()
 
-        if 'rsi' in pattern_name or 'momentum' in pattern_name:
+        if "rsi" in pattern_name or "momentum" in pattern_name:
             return "awareness"  # Momentum = awareness of change
-        elif 'macd' in pattern_name or 'crossover' in pattern_name:
+        elif "macd" in pattern_name or "crossover" in pattern_name:
             return "integration"  # Crossover = integration of signals
-        elif 'bollinger' in pattern_name or 'volatility' in pattern_name:
+        elif "bollinger" in pattern_name or "volatility" in pattern_name:
             return "emergence"  # Volatility = emergent behavior
         else:
             return "awareness"  # Default
 
-    def _adjust_coherence(
-        self,
-        confidence: float,
-        context: Optional[Dict]
-    ) -> float:
+    def _adjust_coherence(self, confidence: float, context: Optional[Dict]) -> float:
         """Adjust coherence based on context."""
         coherence = confidence
 
         if context:
             # Context enriches meaning, potentially increasing coherence
-            context_factor = context.get('enrichment_factor', 1.0)
+            context_factor = context.get("enrichment_factor", 1.0)
             coherence = min(1.0, confidence * context_factor)
 
         return coherence
 
-    def _adjust_confidence(
-        self,
-        coherence: float,
-        context: Optional[Dict]
-    ) -> float:
+    def _adjust_confidence(self, coherence: float, context: Optional[Dict]) -> float:
         """Adjust confidence from coherence."""
         confidence = coherence
 
         if context:
             # Context may reduce precision, potentially lowering confidence
-            precision_factor = context.get('precision_factor', 1.0)
+            precision_factor = context.get("precision_factor", 1.0)
             confidence = min(1.0, coherence * precision_factor)
 
         return confidence
 
-    def _check_signal_state_alignment(
-        self,
-        signal: SignalType,
-        state: str
-    ) -> float:
+    def _check_signal_state_alignment(self, signal: SignalType, state: str) -> float:
         """Check if signal and state are aligned."""
         alignments = {
             (SignalType.BUY, "expanding"): 1.0,
@@ -294,34 +277,31 @@ class PatternBridge:
 
         return alignments.get((signal, state), 0.5)  # Partial alignment if not exact
 
-    def _record_translation(
-        self,
-        direction: str,
-        source: Any,
-        target: Any
-    ):
+    def _record_translation(self, direction: str, source: Any, target: Any):
         """Record translation for analysis."""
-        self.translation_history.append({
-            'direction': direction,
-            'timestamp': datetime.now(),
-            'source_type': type(source).__name__,
-            'target_type': type(target).__name__,
-        })
+        self.translation_history.append(
+            {
+                "direction": direction,
+                "timestamp": datetime.now(),
+                "source_type": type(source).__name__,
+                "target_type": type(target).__name__,
+            }
+        )
 
     def get_translation_stats(self) -> Dict:
         """Get statistics on translation history."""
         if not self.translation_history:
-            return {'count': 0}
+            return {"count": 0}
 
         total = len(self.translation_history)
-        a_to_h = sum(1 for t in self.translation_history if t['direction'] == 'a_to_h')
-        h_to_a = sum(1 for t in self.translation_history if t['direction'] == 'h_to_a')
+        a_to_h = sum(1 for t in self.translation_history if t["direction"] == "a_to_h")
+        h_to_a = sum(1 for t in self.translation_history if t["direction"] == "h_to_a")
 
         return {
-            'total_translations': total,
-            'analytical_to_holistic': a_to_h,
-            'holistic_to_analytical': h_to_a,
-            'last_translation': self.translation_history[-1]['timestamp'],
+            "total_translations": total,
+            "analytical_to_holistic": a_to_h,
+            "holistic_to_analytical": h_to_a,
+            "last_translation": self.translation_history[-1]["timestamp"],
         }
 
 
@@ -330,8 +310,9 @@ if __name__ == "__main__":
     # This will work now with analytical patterns
     # and will seamlessly integrate with consciousness patterns when available
 
-    from src.core.types import PatternType
     import uuid
+
+    from src.core.types import PatternType
 
     # Create sample analytical pattern
     analytical_pattern = PatternResult(
@@ -343,8 +324,8 @@ if __name__ == "__main__":
         timestamp=datetime.now(),
         signal=SignalType.BUY,
         confidence=0.85,
-        metadata={'rsi': 28.5, 'threshold': 30.0},
-        description="RSI oversold condition"
+        metadata={"rsi": 28.5, "threshold": 30.0},
+        description="RSI oversold condition",
     )
 
     # Translate to holistic
@@ -353,7 +334,9 @@ if __name__ == "__main__":
 
     print("Analytical → Holistic:")
     print(f"  Signal: {analytical_pattern.signal} → State: {holistic_pattern.state}")
-    print(f"  Confidence: {analytical_pattern.confidence} → Coherence: {holistic_pattern.coherence}")
+    print(
+        f"  Confidence: {analytical_pattern.confidence} → Coherence: {holistic_pattern.coherence}"
+    )
     print(f"  Trajectory: {holistic_pattern.trajectory}")
     print(f"  Dimension: {holistic_pattern.dimension}")
 
@@ -362,7 +345,9 @@ if __name__ == "__main__":
 
     print("\nHolistic → Analytical:")
     print(f"  State: {holistic_pattern.state} → Signal: {recovered_analytical.signal}")
-    print(f"  Coherence: {holistic_pattern.coherence} → Confidence: {recovered_analytical.confidence}")
+    print(
+        f"  Coherence: {holistic_pattern.coherence} → Confidence: {recovered_analytical.confidence}"
+    )
 
     # Measure coherence
     coherence = bridge.measure_coherence(analytical_pattern, holistic_pattern)

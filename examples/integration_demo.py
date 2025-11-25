@@ -9,21 +9,21 @@ READY FOR: When consciousness-revolution becomes available
 """
 
 import sys
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
 
-from datetime import datetime, timedelta
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
+
+from datetime import datetime
 from typing import List
-import numpy as np
 
-# Analytical hemisphere
-from src.patterns.optimized import OptimizedRSIPattern, OptimizedMACDPattern
+
 from src.core.types import PatternResult, SignalType
-from tests.fixtures.market_data import generate_ohlcv
-
-# Integration layer
-from src.integration.pattern_bridge import PatternBridge, HolisticPattern
-from src.integration.signal_fusion import SignalFusion, FusionStrategy
 from src.integration.context_sync import ContextSync
+# Integration layer
+from src.integration.pattern_bridge import HolisticPattern, PatternBridge
+from src.integration.signal_fusion import FusionStrategy, SignalFusion
+# Analytical hemisphere
+from src.patterns.optimized import OptimizedMACDPattern, OptimizedRSIPattern
+from tests.fixtures.market_data import generate_ohlcv
 
 
 class IntegratedTradingSystem:
@@ -44,8 +44,7 @@ class IntegratedTradingSystem:
         # Integration components
         self.bridge = PatternBridge(coherence_threshold=0.7)
         self.fusion = SignalFusion(
-            default_strategy=FusionStrategy.COHERENCE_WEIGHTED,
-            coherence_threshold=0.5
+            default_strategy=FusionStrategy.COHERENCE_WEIGHTED, coherence_threshold=0.5
         )
         self.context_sync = ContextSync(sync_interval=1800)
 
@@ -63,9 +62,9 @@ class IntegratedTradingSystem:
         Returns:
             Integrated decision with coherence metrics
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("DUAL-HEMISPHERE PROCESSING")
-        print("="*60)
+        print("=" * 60)
 
         # ANALYTICAL HEMISPHERE: Technical pattern detection
         print("\n[LEFT HEMISPHERE: Analytical Processing]")
@@ -73,27 +72,36 @@ class IntegratedTradingSystem:
 
         # Create analytical context
         analytical_context = {
-            'market_state': self._determine_market_state(analytical_patterns),
-            'timestamp': datetime.now(),
-            'patterns': [p.pattern_name for p in analytical_patterns],
-            'metadata': {'source': 'analytical', 'pattern_count': len(analytical_patterns)},
+            "market_state": self._determine_market_state(analytical_patterns),
+            "timestamp": datetime.now(),
+            "patterns": [p.pattern_name for p in analytical_patterns],
+            "metadata": {
+                "source": "analytical",
+                "pattern_count": len(analytical_patterns),
+            },
         }
 
         # HOLISTIC HEMISPHERE: Consciousness pattern detection
         print("\n[RIGHT HEMISPHERE: Holistic Processing]")
-        holistic_patterns = self._holistic_processing(analytical_patterns, analytical_context)
+        holistic_patterns = self._holistic_processing(
+            analytical_patterns, analytical_context
+        )
 
         # Create holistic context
         holistic_context = {
-            'consciousness_state': self._determine_consciousness_state(holistic_patterns),
-            'timestamp': datetime.now(),
-            'patterns': [p.pattern_type for p in holistic_patterns],
-            'metadata': {'source': 'holistic', 'pattern_count': len(holistic_patterns)},
+            "consciousness_state": self._determine_consciousness_state(
+                holistic_patterns
+            ),
+            "timestamp": datetime.now(),
+            "patterns": [p.pattern_type for p in holistic_patterns],
+            "metadata": {"source": "holistic", "pattern_count": len(holistic_patterns)},
         }
 
         # NEXUS LAYER: Synchronize contexts
         print("\n[NEXUS LAYER: Context Synchronization]")
-        shared_context = self.context_sync.sync_state(analytical_context, holistic_context)
+        shared_context = self.context_sync.sync_state(
+            analytical_context, holistic_context
+        )
         print(f"  Shared Context Coherence: {shared_context.coherence_level:.2f}")
         print(f"  Market State: {shared_context.market_state}")
         print(f"  Consciousness State: {shared_context.consciousness_state}")
@@ -107,24 +115,32 @@ class IntegratedTradingSystem:
         fused_signal = self.fusion.fuse(
             analytical_patterns,
             holistic_patterns,
-            strategy=FusionStrategy.COHERENCE_WEIGHTED
+            strategy=FusionStrategy.COHERENCE_WEIGHTED,
         )
 
-        print(f"  Analytical Signal: {fused_signal.analytical_signal.value} (conf={fused_signal.analytical_confidence:.2f})")
-        print(f"  Holistic Signal: {fused_signal.holistic_signal.value} (conf={fused_signal.holistic_confidence:.2f})")
-        print(f"  Agreement: {'YES ✓' if fused_signal.metadata['agreement'] else 'NO ✗'}")
+        print(
+            f"  Analytical Signal: {fused_signal.analytical_signal.value} (conf={fused_signal.analytical_confidence:.2f})"
+        )
+        print(
+            f"  Holistic Signal: {fused_signal.holistic_signal.value} (conf={fused_signal.holistic_confidence:.2f})"
+        )
+        print(
+            f"  Agreement: {'YES ✓' if fused_signal.metadata['agreement'] else 'NO ✗'}"
+        )
         print(f"  Coherence: {fused_signal.coherence:.2f}")
-        print(f"\n  → FUSED DECISION: {fused_signal.signal.value} (confidence={fused_signal.confidence:.2f})")
+        print(
+            f"\n  → FUSED DECISION: {fused_signal.signal.value} (confidence={fused_signal.confidence:.2f})"
+        )
 
         # Return integrated result
         return {
-            'signal': fused_signal.signal,
-            'confidence': fused_signal.confidence,
-            'coherence': fused_signal.coherence,
-            'analytical_patterns': analytical_patterns,
-            'holistic_patterns': holistic_patterns,
-            'shared_context': shared_context,
-            'fused_signal': fused_signal,
+            "signal": fused_signal.signal,
+            "confidence": fused_signal.confidence,
+            "coherence": fused_signal.coherence,
+            "analytical_patterns": analytical_patterns,
+            "holistic_patterns": holistic_patterns,
+            "shared_context": shared_context,
+            "fused_signal": fused_signal,
         }
 
     def _analytical_processing(self, data) -> List[PatternResult]:
@@ -146,9 +162,7 @@ class IntegratedTradingSystem:
         return patterns
 
     def _holistic_processing(
-        self,
-        analytical_patterns: List[PatternResult],
-        analytical_context: dict
+        self, analytical_patterns: List[PatternResult], analytical_context: dict
     ) -> List[HolisticPattern]:
         """Holistic hemisphere processing."""
         holistic_patterns = []
@@ -175,8 +189,12 @@ class IntegratedTradingSystem:
         if not patterns:
             return "neutral"
 
-        buy_signals = sum(1 for p in patterns if p.signal in [SignalType.BUY, SignalType.STRONG_BUY])
-        sell_signals = sum(1 for p in patterns if p.signal in [SignalType.SELL, SignalType.STRONG_SELL])
+        buy_signals = sum(
+            1 for p in patterns if p.signal in [SignalType.BUY, SignalType.STRONG_BUY]
+        )
+        sell_signals = sum(
+            1 for p in patterns if p.signal in [SignalType.SELL, SignalType.STRONG_SELL]
+        )
 
         if buy_signals > sell_signals:
             return "bullish"
@@ -203,9 +221,9 @@ class IntegratedTradingSystem:
     def get_system_metrics(self) -> dict:
         """Get comprehensive system metrics."""
         return {
-            'bridge_stats': self.bridge.get_translation_stats(),
-            'fusion_stats': self.fusion.get_fusion_stats(),
-            'sync_stats': self.context_sync.get_sync_stats(),
+            "bridge_stats": self.bridge.get_translation_stats(),
+            "fusion_stats": self.fusion.get_fusion_stats(),
+            "sync_stats": self.context_sync.get_sync_stats(),
         }
 
 
@@ -216,9 +234,9 @@ def main():
     This works NOW and will seamlessly integrate consciousness patterns
     when consciousness-revolution becomes available.
     """
-    print("="*60)
+    print("=" * 60)
     print("INTEGRATED DUAL-HEMISPHERE TRADING SYSTEM")
-    print("="*60)
+    print("=" * 60)
     print("\nArchitecture:")
     print("  Left Hemisphere: Analytical (Crypto Patterns)")
     print("  Right Hemisphere: Holistic (Consciousness Patterns)")
@@ -229,11 +247,12 @@ def main():
     system = IntegratedTradingSystem()
 
     # Test Case 1: Oversold market (should trigger BUY)
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST CASE 1: Oversold Market Condition")
-    print("="*60)
+    print("=" * 60)
 
     from tests.fixtures.market_data import generate_rsi_oversold
+
     data_oversold = generate_rsi_oversold(periods=100, seed=42)
 
     result1 = system.process_market_data(data_oversold)
@@ -244,11 +263,12 @@ def main():
     print(f"  Coherence: {result1['coherence']:.2f}")
 
     # Test Case 2: Overbought market (should trigger SELL)
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST CASE 2: Overbought Market Condition")
-    print("="*60)
+    print("=" * 60)
 
     from tests.fixtures.market_data import generate_rsi_overbought
+
     data_overbought = generate_rsi_overbought(periods=100, seed=42)
 
     result2 = system.process_market_data(data_overbought)
@@ -259,9 +279,9 @@ def main():
     print(f"  Coherence: {result2['coherence']:.2f}")
 
     # Test Case 3: Neutral market (should trigger HOLD)
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST CASE 3: Neutral Market Condition")
-    print("="*60)
+    print("=" * 60)
 
     data_neutral = generate_ohlcv(periods=100, trend="neutral", seed=42)
 
@@ -273,28 +293,28 @@ def main():
     print(f"  Coherence: {result3['coherence']:.2f}")
 
     # System Metrics
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SYSTEM METRICS")
-    print("="*60)
+    print("=" * 60)
 
     metrics = system.get_system_metrics()
 
     print("\nPattern Bridge:")
-    for key, value in metrics['bridge_stats'].items():
+    for key, value in metrics["bridge_stats"].items():
         print(f"  {key}: {value}")
 
     print("\nSignal Fusion:")
-    for key, value in metrics['fusion_stats'].items():
+    for key, value in metrics["fusion_stats"].items():
         print(f"  {key}: {value}")
 
     print("\nContext Sync:")
-    for key, value in metrics['sync_stats'].items():
+    for key, value in metrics["sync_stats"].items():
         print(f"  {key}: {value}")
 
     # Forward Compatibility Note
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("FORWARD COMPATIBILITY")
-    print("="*60)
+    print("=" * 60)
     print("\n✓ System is READY for consciousness-revolution integration")
     print("✓ All interfaces defined and tested")
     print("✓ Translation codecs operational")

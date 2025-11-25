@@ -1,46 +1,31 @@
 """Comprehensive tests for pattern detection."""
 
-import pytest
+
 import numpy as np
-from datetime import datetime
 
 from src.core.types import OHLCV, PatternType
-from src.patterns.technical import (
-    RSIPattern,
-    MACDPattern,
-    BollingerBandsPattern,
-    StochasticPattern,
-    VWAPPattern,
-    MovingAverageCrossPattern,
-    ATRPattern,
-    OBVPattern,
-)
-from src.patterns.candlestick import (
-    DojiPattern,
-    HammerPattern,
-    EngulfingPattern,
-    MorningEveningStarPattern,
-    ThreeSoldiersPattern,
-    ShootingStarPattern,
-)
-from src.patterns.chart import (
-    HeadAndShouldersPattern,
-    TrianglePattern,
-    DoubleTopBottomPattern,
-    FlagPattern,
-    WedgePattern,
-)
+from src.patterns.candlestick import (DojiPattern, EngulfingPattern,
+                                      HammerPattern, MorningEveningStarPattern,
+                                      ShootingStarPattern,
+                                      ThreeSoldiersPattern)
+from src.patterns.chart import (DoubleTopBottomPattern, FlagPattern,
+                                HeadAndShouldersPattern, TrianglePattern,
+                                WedgePattern)
+from src.patterns.technical import (ATRPattern, BollingerBandsPattern,
+                                    MACDPattern, MovingAverageCrossPattern,
+                                    OBVPattern, RSIPattern, StochasticPattern,
+                                    VWAPPattern)
 
 
-def create_sample_data(length: int = 100, trend: str = 'random') -> OHLCV:
+def create_sample_data(length: int = 100, trend: str = "random") -> OHLCV:
     """Create sample OHLCV data for testing."""
     timestamps = np.arange(length, dtype=float) * 3600  # Hourly candles
 
-    if trend == 'uptrend':
+    if trend == "uptrend":
         prices = np.linspace(100, 150, length) + np.random.randn(length) * 2
-    elif trend == 'downtrend':
+    elif trend == "downtrend":
         prices = np.linspace(150, 100, length) + np.random.randn(length) * 2
-    elif trend == 'sideways':
+    elif trend == "sideways":
         prices = np.ones(length) * 125 + np.random.randn(length) * 3
     else:  # random
         prices = np.random.randn(length).cumsum() + 100
@@ -94,6 +79,7 @@ def create_oversold_rsi_data(length: int = 50) -> OHLCV:
 # TECHNICAL PATTERN TESTS
 # ============================================================================
 
+
 class TestRSIPattern:
     """Tests for RSI pattern detection."""
 
@@ -119,7 +105,7 @@ class TestRSIPattern:
         results = pattern.detect(data)
 
         # Should detect overbought condition
-        assert any('overbought' in r.pattern_name.lower() for r in results)
+        assert any("overbought" in r.pattern_name.lower() for r in results)
 
     def test_rsi_oversold_detection(self):
         """Test RSI oversold detection."""
@@ -128,7 +114,7 @@ class TestRSIPattern:
         results = pattern.detect(data)
 
         # Should detect oversold condition
-        assert any('oversold' in r.pattern_name.lower() for r in results)
+        assert any("oversold" in r.pattern_name.lower() for r in results)
 
     def test_rsi_validation(self):
         """Test RSI pattern validation."""
@@ -138,7 +124,7 @@ class TestRSIPattern:
 
         for result in results:
             assert pattern.validate(result)
-            assert 0 <= result.metadata['rsi'] <= 100
+            assert 0 <= result.metadata["rsi"] <= 100
 
 
 class TestMACDPattern:
@@ -167,8 +153,8 @@ class TestMACDPattern:
 
         for result in results:
             assert pattern.validate(result)
-            assert 'macd' in result.metadata
-            assert 'signal' in result.metadata
+            assert "macd" in result.metadata
+            assert "signal" in result.metadata
 
 
 class TestBollingerBandsPattern:
@@ -287,6 +273,7 @@ class TestOBVPattern:
 # CANDLESTICK PATTERN TESTS
 # ============================================================================
 
+
 class TestDojiPattern:
     """Tests for Doji pattern."""
 
@@ -396,6 +383,7 @@ class TestShootingStarPattern:
 # CHART PATTERN TESTS
 # ============================================================================
 
+
 class TestHeadAndShouldersPattern:
     """Tests for Head and Shoulders pattern."""
 
@@ -480,6 +468,7 @@ class TestWedgePattern:
 # INTEGRATION TESTS
 # ============================================================================
 
+
 class TestPatternIntegration:
     """Integration tests for pattern detection."""
 
@@ -537,4 +526,6 @@ class TestPatternIntegration:
         for pattern in all_patterns:
             results = pattern.detect(data)
             for result in results:
-                assert 0 <= result.confidence <= 1, f"Invalid confidence for {pattern.name}"
+                assert (
+                    0 <= result.confidence <= 1
+                ), f"Invalid confidence for {pattern.name}"

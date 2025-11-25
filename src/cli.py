@@ -1,12 +1,12 @@
 """Command-line interface for the pattern recognition engine."""
 
-import asyncio
 import argparse
+import asyncio
 import sys
+
 from loguru import logger
 
 from src.main import main as engine_main
-from src.utils.config import load_config
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -30,54 +30,50 @@ Examples:
 
   # Show version
   crypto-pattern --version
-        """
+        """,
     )
 
     parser.add_argument(
-        '--config',
+        "--config",
         type=str,
-        default='config/config.yaml',
-        help='Path to configuration file (default: config/config.yaml)'
+        default="config/config.yaml",
+        help="Path to configuration file (default: config/config.yaml)",
     )
 
     parser.add_argument(
-        '--symbol',
+        "--symbol", type=str, help="Trading pair to analyze (e.g., BTC/USDT)"
+    )
+
+    parser.add_argument(
+        "--timeframe",
         type=str,
-        help='Trading pair to analyze (e.g., BTC/USDT)'
+        choices=["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"],
+        help="Timeframe for analysis",
     )
 
     parser.add_argument(
-        '--timeframe',
+        "--exchange",
         type=str,
-        choices=['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'],
-        help='Timeframe for analysis'
+        choices=["binance", "coinbase", "kraken", "bybit", "okx"],
+        help="Exchange to use",
     )
 
     parser.add_argument(
-        '--exchange',
+        "--realtime", action="store_true", help="Enable real-time continuous monitoring"
+    )
+
+    parser.add_argument(
+        "--log-level",
         type=str,
-        choices=['binance', 'coinbase', 'kraken', 'bybit', 'okx'],
-        help='Exchange to use'
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level (default: INFO)",
     )
 
     parser.add_argument(
-        '--realtime',
-        action='store_true',
-        help='Enable real-time continuous monitoring'
-    )
-
-    parser.add_argument(
-        '--log-level',
-        type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Logging level (default: INFO)'
-    )
-
-    parser.add_argument(
-        '--version',
-        action='version',
-        version='Crypto Pattern Recognition Engine v0.1.0'
+        "--version",
+        action="version",
+        version="Crypto Pattern Recognition Engine v0.1.0",
     )
 
     return parser

@@ -1,9 +1,9 @@
 """Portfolio management module."""
 
-from dataclasses import dataclass
-from typing import Dict, List
-from datetime import datetime
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Dict, List
 
 from src.trading.simulator import OrderSide
 
@@ -89,7 +89,9 @@ class Portfolio:
             logger.warning(f"Target allocation sums to {total}%, adjusting to 100%")
             # Normalize
             factor = 100.0 / total
-            self.target_allocation = {k: v * factor for k, v in self.target_allocation.items()}
+            self.target_allocation = {
+                k: v * factor for k, v in self.target_allocation.items()
+            }
 
         logger.info(f"Target allocation set: {self.target_allocation}")
 
@@ -136,12 +138,16 @@ class Portfolio:
             diff = abs(current_pct - target_pct)
 
             if diff > self.rebalance_threshold:
-                logger.info(f"{symbol}: current {current_pct:.1f}%, target {target_pct:.1f}%, diff {diff:.1f}%")
+                logger.info(
+                    f"{symbol}: current {current_pct:.1f}%, target {target_pct:.1f}%, diff {diff:.1f}%"
+                )
                 return True
 
         return False
 
-    def rebalance(self, current_prices: Dict[str, float], dry_run: bool = False) -> Dict[str, float]:
+    def rebalance(
+        self, current_prices: Dict[str, float], dry_run: bool = False
+    ) -> Dict[str, float]:
         """
         Rebalance portfolio to target allocations.
 
@@ -198,18 +204,12 @@ class Portfolio:
             if quantity_diff > 0:
                 # Buy
                 self.simulator.market_order(
-                    symbol,
-                    OrderSide.BUY,
-                    abs(quantity_diff),
-                    current_prices[symbol]
+                    symbol, OrderSide.BUY, abs(quantity_diff), current_prices[symbol]
                 )
             else:
                 # Sell
                 self.simulator.market_order(
-                    symbol,
-                    OrderSide.SELL,
-                    abs(quantity_diff),
-                    current_prices[symbol]
+                    symbol, OrderSide.SELL, abs(quantity_diff), current_prices[symbol]
                 )
 
         return trades
@@ -224,7 +224,9 @@ class Portfolio:
         total_value = self.simulator.get_equity()
         positions_value = self.simulator.get_total_position_value()
 
-        unrealized_pnl = sum(p.unrealized_pnl for p in self.simulator.positions.values())
+        unrealized_pnl = sum(
+            p.unrealized_pnl for p in self.simulator.positions.values()
+        )
 
         state = PortfolioState(
             timestamp=datetime.utcnow(),
@@ -253,23 +255,31 @@ class Portfolio:
         if len(self.history) > 1:
             # Calculate volatility from historical values
             values = [state.total_value for state in self.history]
-            returns = [(values[i] - values[i-1]) / values[i-1] for i in range(1, len(values))]
+            returns = [
+                (values[i] - values[i - 1]) / values[i - 1]
+                for i in range(1, len(values))
+            ]
 
             import numpy as np
+
             volatility = np.std(returns) * np.sqrt(252) * 100 if returns else 0.0
 
             # Calculate Sharpe ratio (assuming 0% risk-free rate)
             avg_return = np.mean(returns) if returns else 0.0
-            sharpe = (avg_return / (np.std(returns) + 1e-9)) * np.sqrt(252) if returns else 0.0
+            sharpe = (
+                (avg_return / (np.std(returns) + 1e-9)) * np.sqrt(252)
+                if returns
+                else 0.0
+            )
         else:
             volatility = 0.0
             sharpe = 0.0
 
         return {
             **stats,
-            'volatility_pct': volatility,
-            'sharpe_ratio': sharpe,
-            'max_drawdown_pct': self._calculate_max_drawdown(),
+            "volatility_pct": volatility,
+            "sharpe_ratio": sharpe,
+            "max_drawdown_pct": self._calculate_max_drawdown(),
         }
 
     def _calculate_max_drawdown(self) -> float:
@@ -318,7 +328,9 @@ class Portfolio:
             leverage = position_value / equity if equity > 0 else 0
 
             if leverage > self.simulator.margin_multiplier:
-                warnings.append(f"Leverage {leverage:.1f}x exceeds limit {self.simulator.margin_multiplier}x")
+                warnings.append(
+                    f"Leverage {leverage:.1f}x exceeds limit {self.simulator.margin_multiplier}x"
+                )
 
         return warnings
 
@@ -339,7 +351,6 @@ class Portfolio:
         Returns:
             Dictionary of optimal allocations
         """
-        import numpy as np
 
         # Simple equal-weight allocation as baseline
         # In production, use more sophisticated optimization (e.g., scipy.optimize)
@@ -351,9 +362,9 @@ class Portfolio:
         state = self.get_state()
         metrics = self.get_performance_metrics()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("PORTFOLIO SUMMARY")
-        print("="*70)
+        print("=" * 70)
         print(f"Total Value: ${state.total_value:,.2f}")
         print(f"Cash: ${state.cash:,.2f}")
         print(f"Positions Value: ${state.positions_value:,.2f}")
@@ -364,12 +375,16 @@ class Portfolio:
 
         if state.allocation:
             print(f"\nCurrent Allocation:")
-            for symbol, pct in sorted(state.allocation.items(), key=lambda x: x[1], reverse=True):
+            for symbol, pct in sorted(
+                state.allocation.items(), key=lambda x: x[1], reverse=True
+            ):
                 print(f"  {symbol:12s} {pct:6.2f}%")
 
         if self.target_allocation:
             print(f"\nTarget Allocation:")
-            for symbol, pct in sorted(self.target_allocation.items(), key=lambda x: x[1], reverse=True):
+            for symbol, pct in sorted(
+                self.target_allocation.items(), key=lambda x: x[1], reverse=True
+            ):
                 print(f"  {symbol:12s} {pct:6.2f}%")
 
         print(f"\nPerformance:")
@@ -378,7 +393,7 @@ class Portfolio:
         print(f"  Sharpe Ratio: {metrics['sharpe_ratio']:.2f}")
         print(f"  Max Drawdown: {metrics['max_drawdown_pct']:.2f}%")
         print(f"  Total Fees: ${metrics['total_fees']:.2f}")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
 
         # Check risk limits
         warnings = self.check_risk_limits()

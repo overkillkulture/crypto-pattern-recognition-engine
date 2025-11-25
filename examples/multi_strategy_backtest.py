@@ -13,25 +13,29 @@ Shows performance comparison, equity curves, and statistical analysis.
 
 import asyncio
 import sys
-import numpy as np
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import Dict, List
 
-sys.path.insert(0, '/home/user/crypto-pattern-recognition-engine')
+import numpy as np
 
-from src.trading.simulator import TradingSimulator, OrderSide
-from src.utils.risk import RiskManager
+sys.path.insert(0, "/home/user/crypto-pattern-recognition-engine")
+
 from src.core.types import OHLCV, SignalType
-from src.patterns.technical import RSIPattern, MACDPattern, BollingerBandsPattern
+from src.patterns.technical import (BollingerBandsPattern, MACDPattern,
+                                    RSIPattern)
+from src.trading.simulator import OrderSide, TradingSimulator
+from src.utils.risk import RiskManager
 
 
 def generate_market_data(days=90, initial_price=50000):
     """Generate synthetic market data with realistic price action."""
     periods = days * 24  # Hourly data
-    timestamps = np.array([
-        (datetime.now() - timedelta(hours=periods-i)).timestamp()
-        for i in range(periods)
-    ])
+    timestamps = np.array(
+        [
+            (datetime.now() - timedelta(hours=periods - i)).timestamp()
+            for i in range(periods)
+        ]
+    )
 
     # Create multi-phase market with different regimes
     # Phase 1: Ranging (25%)
@@ -52,8 +56,8 @@ def generate_market_data(days=90, initial_price=50000):
     phase3 = np.random.randn(phase_len) * 0.003
 
     # Phase 4: Bear trend
-    phase4_trend = np.linspace(0, -0.0008, periods - 3*phase_len)
-    phase4 = phase4_trend + np.random.randn(periods - 3*phase_len) * 0.002
+    phase4_trend = np.linspace(0, -0.0008, periods - 3 * phase_len)
+    phase4 = phase4_trend + np.random.randn(periods - 3 * phase_len) * 0.002
 
     returns = np.concatenate([phase1, phase2, phase3, phase4])
     prices = initial_price * np.cumprod(1 + returns)
@@ -98,7 +102,9 @@ class Strategy:
         """Override in subclass."""
         return False
 
-    def should_exit(self, patterns: List, data: OHLCV, idx: int, current_price: float) -> tuple:
+    def should_exit(
+        self, patterns: List, data: OHLCV, idx: int, current_price: float
+    ) -> tuple:
         """Override in subclass. Returns (should_exit, reason)."""
         return False, ""
 
@@ -128,10 +134,10 @@ class Strategy:
 
                 if order and order.is_filled:
                     self.current_position = {
-                        'entry_price': current_price,
-                        'stop_loss': stop_loss,
-                        'take_profit': position_size.take_profit,
-                        'quantity': actual_quantity,
+                        "entry_price": current_price,
+                        "stop_loss": stop_loss,
+                        "take_profit": position_size.take_profit,
+                        "quantity": actual_quantity,
                     }
                     return True
         else:
@@ -140,7 +146,7 @@ class Strategy:
                 order = self.simulator.market_order(
                     symbol,
                     OrderSide.SELL,
-                    self.current_position['quantity'],
+                    self.current_position["quantity"],
                     current_price,
                 )
                 if order and order.is_filled:
@@ -167,12 +173,17 @@ class RSIStrategy(Strategy):
         buy_signals = [p for p in rsi_patterns if p.signal == SignalType.BUY]
         return len(buy_signals) > 0
 
-    def should_exit(self, patterns: List, data: OHLCV, idx: int, current_price: float) -> tuple:
+    def should_exit(
+        self, patterns: List, data: OHLCV, idx: int, current_price: float
+    ) -> tuple:
         # Stop loss / Take profit
         if self.current_position:
-            if current_price <= self.current_position['stop_loss']:
+            if current_price <= self.current_position["stop_loss"]:
                 return True, "Stop Loss"
-            if self.current_position['take_profit'] and current_price >= self.current_position['take_profit']:
+            if (
+                self.current_position["take_profit"]
+                and current_price >= self.current_position["take_profit"]
+            ):
                 return True, "Take Profit"
 
         # RSI sell signal
@@ -196,11 +207,16 @@ class MACDStrategy(Strategy):
         buy_signals = [p for p in macd_patterns if p.signal == SignalType.BUY]
         return len(buy_signals) > 0
 
-    def should_exit(self, patterns: List, data: OHLCV, idx: int, current_price: float) -> tuple:
+    def should_exit(
+        self, patterns: List, data: OHLCV, idx: int, current_price: float
+    ) -> tuple:
         if self.current_position:
-            if current_price <= self.current_position['stop_loss']:
+            if current_price <= self.current_position["stop_loss"]:
                 return True, "Stop Loss"
-            if self.current_position['take_profit'] and current_price >= self.current_position['take_profit']:
+            if (
+                self.current_position["take_profit"]
+                and current_price >= self.current_position["take_profit"]
+            ):
                 return True, "Take Profit"
 
         macd_patterns = self.macd.detect(data)
@@ -223,11 +239,16 @@ class BollingerStrategy(Strategy):
         buy_signals = [p for p in bb_patterns if p.signal == SignalType.BUY]
         return len(buy_signals) > 0
 
-    def should_exit(self, patterns: List, data: OHLCV, idx: int, current_price: float) -> tuple:
+    def should_exit(
+        self, patterns: List, data: OHLCV, idx: int, current_price: float
+    ) -> tuple:
         if self.current_position:
-            if current_price <= self.current_position['stop_loss']:
+            if current_price <= self.current_position["stop_loss"]:
                 return True, "Stop Loss"
-            if self.current_position['take_profit'] and current_price >= self.current_position['take_profit']:
+            if (
+                self.current_position["take_profit"]
+                and current_price >= self.current_position["take_profit"]
+            ):
                 return True, "Take Profit"
 
         bb_patterns = self.bb.detect(data)
@@ -257,11 +278,16 @@ class CombinedStrategy(Strategy):
 
         return len(buy_signals) >= 2  # Require 2+ confirmations
 
-    def should_exit(self, patterns: List, data: OHLCV, idx: int, current_price: float) -> tuple:
+    def should_exit(
+        self, patterns: List, data: OHLCV, idx: int, current_price: float
+    ) -> tuple:
         if self.current_position:
-            if current_price <= self.current_position['stop_loss']:
+            if current_price <= self.current_position["stop_loss"]:
                 return True, "Stop Loss"
-            if self.current_position['take_profit'] and current_price >= self.current_position['take_profit']:
+            if (
+                self.current_position["take_profit"]
+                and current_price >= self.current_position["take_profit"]
+            ):
                 return True, "Take Profit"
 
         rsi_patterns = self.rsi.detect(data)
@@ -280,9 +306,9 @@ class CombinedStrategy(Strategy):
 async def run_backtest():
     """Run multi-strategy backtest comparison."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📊 MULTI-STRATEGY BACKTEST COMPARISON")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Generate market data
     print("📈 Generating market data (90 days, 4 market regimes)...")
@@ -316,18 +342,18 @@ async def run_backtest():
     # Run backtest
     symbol = "BTC/USDT"
 
-    print("="*80)
+    print("=" * 80)
     print("RUNNING BACKTEST...")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     for i in range(50, len(data.close)):
         window_data = OHLCV(
-            timestamps=data.timestamps[:i+1],
-            open=data.open[:i+1],
-            high=data.high[:i+1],
-            low=data.low[:i+1],
-            close=data.close[:i+1],
-            volume=data.volume[:i+1],
+            timestamps=data.timestamps[: i + 1],
+            open=data.open[: i + 1],
+            high=data.high[: i + 1],
+            low=data.low[: i + 1],
+            close=data.close[: i + 1],
+            volume=data.volume[: i + 1],
         )
 
         current_price = data.close[i]
@@ -342,7 +368,9 @@ async def run_backtest():
 
             # Exit logic
             else:
-                should_exit, reason = strategy.should_exit([], window_data, i, current_price)
+                should_exit, reason = strategy.should_exit(
+                    [], window_data, i, current_price
+                )
                 if should_exit:
                     strategy.execute_trade(symbol, OrderSide.SELL, current_price)
 
@@ -351,59 +379,63 @@ async def run_backtest():
     for strategy in strategies:
         if strategy.current_position:
             strategy.simulator.market_order(
-                symbol, OrderSide.SELL,
-                strategy.current_position['quantity'],
-                final_price
+                symbol,
+                OrderSide.SELL,
+                strategy.current_position["quantity"],
+                final_price,
             )
 
     # Generate comparison report
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("BACKTEST RESULTS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Collect stats
     results = []
     for strategy in strategies:
         stats = strategy.get_stats()
-        results.append({
-            'name': strategy.name,
-            'stats': stats
-        })
+        results.append({"name": strategy.name, "stats": stats})
 
     # Print comparison table
-    print(f"{'Strategy':<30} {'Return':<12} {'Trades':<10} {'Win Rate':<12} {'Sharpe':<12}")
+    print(
+        f"{'Strategy':<30} {'Return':<12} {'Trades':<10} {'Win Rate':<12} {'Sharpe':<12}"
+    )
     print("-" * 80)
 
     for result in results:
-        name = result['name']
-        stats = result['stats']
+        name = result["name"]
+        stats = result["stats"]
 
         # Calculate Sharpe ratio (simplified)
-        returns_pct = stats['total_return_pct']
+        returns_pct = stats["total_return_pct"]
         sharpe = returns_pct / 10.0 if returns_pct > 0 else 0  # Simplified
 
-        print(f"{name:<30} {stats['total_return_pct']:>+10.2f}% "
-              f"{stats['total_trades']:>8} "
-              f"{stats['win_rate']:>10.1f}% "
-              f"{sharpe:>10.2f}")
+        print(
+            f"{name:<30} {stats['total_return_pct']:>+10.2f}% "
+            f"{stats['total_trades']:>8} "
+            f"{stats['win_rate']:>10.1f}% "
+            f"{sharpe:>10.2f}"
+        )
 
     print()
 
     # Detailed stats for each strategy
-    print("="*80)
+    print("=" * 80)
     print("DETAILED STATISTICS")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     for result in results:
-        stats = result['stats']
-        name = result['name']
+        stats = result["stats"]
+        name = result["name"]
 
         print(f"📊 {name}")
         print(f"  Final Equity: ${stats['equity']:,.2f}")
         print(f"  Total Return: {stats['total_return_pct']:+.2f}%")
         print(f"  Total Trades: {stats['total_trades']}")
-        print(f"  Win Rate: {stats['win_rate']:.1f}% "
-              f"({stats['winning_trades']}W / {stats['losing_trades']}L)")
+        print(
+            f"  Win Rate: {stats['win_rate']:.1f}% "
+            f"({stats['winning_trades']}W / {stats['losing_trades']}L)"
+        )
         print(f"  Realized P&L: ${stats['realized_pnl']:+,.2f}")
         print(f"  Total Fees: ${stats['total_fees']:,.2f}")
         print()
@@ -414,17 +446,21 @@ async def run_backtest():
     print()
 
     # Ranking
-    sorted_results = sorted(results, key=lambda x: x['stats']['total_return_pct'], reverse=True)
+    sorted_results = sorted(
+        results, key=lambda x: x["stats"]["total_return_pct"], reverse=True
+    )
 
-    print("="*80)
+    print("=" * 80)
     print("STRATEGY RANKING (by Total Return)")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     for rank, result in enumerate(sorted_results, 1):
-        name = result['name']
-        return_pct = result['stats']['total_return_pct']
+        name = result["name"]
+        return_pct = result["stats"]["total_return_pct"]
 
-        medal = "🥇" if rank == 1 else "🥈" if rank == 2 else "🥉" if rank == 3 else "  "
+        medal = (
+            "🥇" if rank == 1 else "🥈" if rank == 2 else "🥉" if rank == 3 else "  "
+        )
         print(f"{medal} #{rank}: {name:<30} {return_pct:>+10.2f}%")
 
     print()
@@ -437,14 +473,14 @@ async def run_backtest():
     print(f"   Total Trades: {best['stats']['total_trades']}")
 
     # Check if beat buy & hold
-    if best['stats']['total_return_pct'] > buy_hold_return:
-        outperformance = best['stats']['total_return_pct'] - buy_hold_return
+    if best["stats"]["total_return_pct"] > buy_hold_return:
+        outperformance = best["stats"]["total_return_pct"] - buy_hold_return
         print(f"   ✅ Outperformed buy & hold by {outperformance:+.2f}%")
     else:
-        underperformance = buy_hold_return - best['stats']['total_return_pct']
+        underperformance = buy_hold_return - best["stats"]["total_return_pct"]
         print(f"   ⚠️  Underperformed buy & hold by {underperformance:.2f}%")
 
-    print("\n" + "="*80 + "\n")
+    print("\n" + "=" * 80 + "\n")
 
     print("💡 Key Insights:")
     print("  • Combined strategies tend to be more conservative")
@@ -471,6 +507,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

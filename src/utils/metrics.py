@@ -1,7 +1,8 @@
 """Metrics calculation utilities."""
 
+from typing import Tuple
+
 import numpy as np
-from typing import List, Tuple
 
 
 def calculate_rsi(prices: np.ndarray, period: int = 14) -> np.ndarray:
@@ -19,8 +20,8 @@ def calculate_rsi(prices: np.ndarray, period: int = 14) -> np.ndarray:
     gains = np.where(deltas > 0, deltas, 0)
     losses = np.where(deltas < 0, -deltas, 0)
 
-    avg_gains = np.convolve(gains, np.ones(period), 'valid') / period
-    avg_losses = np.convolve(losses, np.ones(period), 'valid') / period
+    avg_gains = np.convolve(gains, np.ones(period), "valid") / period
+    avg_losses = np.convolve(losses, np.ones(period), "valid") / period
 
     rs = avg_gains / (avg_losses + 1e-10)
     rsi = 100 - (100 / (1 + rs))
@@ -30,7 +31,7 @@ def calculate_rsi(prices: np.ndarray, period: int = 14) -> np.ndarray:
 
 def calculate_sma(prices: np.ndarray, period: int) -> np.ndarray:
     """Calculate Simple Moving Average."""
-    return np.convolve(prices, np.ones(period), 'valid') / period
+    return np.convolve(prices, np.ones(period), "valid") / period
 
 
 def calculate_ema(prices: np.ndarray, period: int) -> np.ndarray:
@@ -40,16 +41,13 @@ def calculate_ema(prices: np.ndarray, period: int) -> np.ndarray:
     multiplier = 2 / (period + 1)
 
     for i in range(1, len(prices)):
-        ema[i] = (prices[i] - ema[i-1]) * multiplier + ema[i-1]
+        ema[i] = (prices[i] - ema[i - 1]) * multiplier + ema[i - 1]
 
     return ema
 
 
 def calculate_macd(
-    prices: np.ndarray,
-    fast: int = 12,
-    slow: int = 26,
-    signal: int = 9
+    prices: np.ndarray, fast: int = 12, slow: int = 26, signal: int = 9
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate MACD indicator.
@@ -68,9 +66,7 @@ def calculate_macd(
 
 
 def calculate_bollinger_bands(
-    prices: np.ndarray,
-    period: int = 20,
-    std_dev: float = 2.0
+    prices: np.ndarray, period: int = 20, std_dev: float = 2.0
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate Bollinger Bands.
@@ -81,12 +77,11 @@ def calculate_bollinger_bands(
     middle = calculate_sma(prices, period)
 
     # Pad to match original length
-    middle_full = np.concatenate([np.full(period-1, np.nan), middle])
+    middle_full = np.concatenate([np.full(period - 1, np.nan), middle])
 
-    std = np.array([
-        np.std(prices[max(0, i-period+1):i+1])
-        for i in range(len(prices))
-    ])
+    std = np.array(
+        [np.std(prices[max(0, i - period + 1) : i + 1]) for i in range(len(prices))]
+    )
 
     upper = middle_full + (std_dev * std)
     lower = middle_full - (std_dev * std)
@@ -95,10 +90,7 @@ def calculate_bollinger_bands(
 
 
 def calculate_atr(
-    high: np.ndarray,
-    low: np.ndarray,
-    close: np.ndarray,
-    period: int = 14
+    high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14
 ) -> np.ndarray:
     """Calculate Average True Range."""
     tr1 = high - low
@@ -113,10 +105,7 @@ def calculate_atr(
 
 
 def calculate_vwap(
-    high: np.ndarray,
-    low: np.ndarray,
-    close: np.ndarray,
-    volume: np.ndarray
+    high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray
 ) -> np.ndarray:
     """Calculate Volume Weighted Average Price."""
     typical_price = (high + low + close) / 3
@@ -129,12 +118,12 @@ def calculate_obv(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     obv[0] = volume[0]
 
     for i in range(1, len(close)):
-        if close[i] > close[i-1]:
-            obv[i] = obv[i-1] + volume[i]
-        elif close[i] < close[i-1]:
-            obv[i] = obv[i-1] - volume[i]
+        if close[i] > close[i - 1]:
+            obv[i] = obv[i - 1] + volume[i]
+        elif close[i] < close[i - 1]:
+            obv[i] = obv[i - 1] - volume[i]
         else:
-            obv[i] = obv[i-1]
+            obv[i] = obv[i - 1]
 
     return obv
 
@@ -142,10 +131,10 @@ def calculate_obv(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
 def calculate_metrics(prices: np.ndarray) -> dict:
     """Calculate comprehensive metrics."""
     return {
-        'mean': np.mean(prices),
-        'std': np.std(prices),
-        'min': np.min(prices),
-        'max': np.max(prices),
-        'median': np.median(prices),
-        'volatility': np.std(np.diff(prices) / prices[:-1]),
+        "mean": np.mean(prices),
+        "std": np.std(prices),
+        "min": np.min(prices),
+        "max": np.max(prices),
+        "median": np.median(prices),
+        "volatility": np.std(np.diff(prices) / prices[:-1]),
     }

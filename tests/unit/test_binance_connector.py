@@ -1,19 +1,15 @@
 """Comprehensive tests for Binance connector."""
 
 import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import numpy as np
 import pytest
 
-from src.exchanges.binance import (
-    BinanceConnector,
-    BinanceMarket,
-    RateLimitConfig,
-    RetryConfig,
-    RateLimiter,
-)
-from src.core.types import OHLCV, Timeframe
+from src.core.types import Timeframe
+from src.exchanges.binance import (BinanceConnector, BinanceMarket,
+                                   RateLimitConfig, RateLimiter)
 
 
 class TestRateLimiter:
@@ -67,7 +63,7 @@ class TestBinanceConnector:
     @pytest.fixture
     def connector(self):
         """Create BinanceConnector instance."""
-        with patch('src.exchanges.binance.ccxt'):
+        with patch("src.exchanges.binance.ccxt"):
             connector = BinanceConnector(
                 api_key="test_key",
                 api_secret="test_secret",
@@ -90,7 +86,7 @@ class TestBinanceConnector:
         """Test connector initializes correctly."""
         assert connector.market == BinanceMarket.SPOT
         assert connector.testnet is True
-        assert connector.stats['requests_sent'] == 0
+        assert connector.stats["requests_sent"] == 0
 
     @pytest.mark.asyncio
     async def test_get_ohlcv_basic(self, connector, mock_exchange):
@@ -107,9 +103,7 @@ class TestBinanceConnector:
 
         # Fetch data
         ohlcv = await connector.get_ohlcv(
-            symbol="BTC/USDT",
-            timeframe=Timeframe.ONE_HOUR,
-            limit=3
+            symbol="BTC/USDT", timeframe=Timeframe.ONE_HOUR, limit=3
         )
 
         # Verify
@@ -138,9 +132,9 @@ class TestBinanceConnector:
         """Test latest price fetching."""
         connector.exchange = mock_exchange
         mock_exchange.fetch_ticker.return_value = {
-            'last': 42000.50,
-            'high': 43000.0,
-            'low': 41000.0,
+            "last": 42000.50,
+            "high": 43000.0,
+            "low": 41000.0,
         }
 
         price = await connector.get_latest_price("BTC/USDT")
@@ -153,21 +147,21 @@ class TestBinanceConnector:
         """Test 24-hour statistics."""
         connector.exchange = mock_exchange
         mock_exchange.fetch_ticker.return_value = {
-            'last': 42000.0,
-            'high': 43000.0,
-            'low': 41000.0,
-            'quoteVolume': 1500000000,
-            'percentage': 2.5,
-            'timestamp': 1609459200000,
+            "last": 42000.0,
+            "high": 43000.0,
+            "low": 41000.0,
+            "quoteVolume": 1500000000,
+            "percentage": 2.5,
+            "timestamp": 1609459200000,
         }
 
         stats = await connector.get_24h_stats("BTC/USDT")
 
-        assert stats['last'] == 42000.0
-        assert stats['high'] == 43000.0
-        assert stats['low'] == 41000.0
-        assert stats['volume'] == 1500000000
-        assert stats['change_percent'] == 2.5
+        assert stats["last"] == 42000.0
+        assert stats["high"] == 43000.0
+        assert stats["low"] == 41000.0
+        assert stats["volume"] == 1500000000
+        assert stats["change_percent"] == 2.5
 
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="Requires integration with real ccxt exceptions")
@@ -175,7 +169,6 @@ class TestBinanceConnector:
         """Test automatic retry on network errors."""
         # Note: This test is skipped because mocking ccxt exceptions properly
         # is complex. Retry logic is validated in integration tests.
-        pass
 
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="Requires integration with real ccxt exceptions")
@@ -183,7 +176,6 @@ class TestBinanceConnector:
         """Test that max retries are respected."""
         # Note: This test is skipped because mocking ccxt exceptions properly
         # is complex. Retry logic is validated in integration tests.
-        pass
 
     @pytest.mark.asyncio
     async def test_historical_ohlcv_pagination(self, connector, mock_exchange):
@@ -263,24 +255,24 @@ class TestBinanceConnector:
         """Test exchange info retrieval."""
         connector.exchange = mock_exchange
         mock_exchange.fetch_markets.return_value = [
-            {'id': 'BTCUSDT', 'symbol': 'BTC/USDT'},
-            {'id': 'ETHUSDT', 'symbol': 'ETH/USDT'},
+            {"id": "BTCUSDT", "symbol": "BTC/USDT"},
+            {"id": "ETHUSDT", "symbol": "ETH/USDT"},
         ]
         mock_exchange.rateLimit = 1000
 
         info = await connector.get_exchange_info()
 
-        assert info['markets_count'] == 2
-        assert len(info['markets']) == 2
+        assert info["markets_count"] == 2
+        assert len(info["markets"]) == 2
 
     @pytest.mark.asyncio
     async def test_statistics_tracking(self, connector, mock_exchange):
         """Test that statistics are tracked correctly."""
         connector.exchange = mock_exchange
         mock_exchange.fetch_ticker.return_value = {
-            'last': 42000.0,
-            'high': 43000.0,
-            'low': 41000.0
+            "last": 42000.0,
+            "high": 43000.0,
+            "low": 41000.0,
         }
 
         # Make several requests
@@ -289,8 +281,8 @@ class TestBinanceConnector:
 
         stats = connector.get_stats()
 
-        assert stats['requests_sent'] == 2
-        assert stats['success_rate'] == 100.0
+        assert stats["requests_sent"] == 2
+        assert stats["success_rate"] == 100.0
 
     @pytest.mark.asyncio
     async def test_close(self, connector, mock_exchange):
@@ -308,19 +300,18 @@ class TestBinanceIntegration:
     @pytest.mark.asyncio
     async def test_rate_limiting_integration(self):
         """Test rate limiting in realistic scenario."""
-        with patch('src.exchanges.binance.ccxt'):
+        with patch("src.exchanges.binance.ccxt"):
             connector = BinanceConnector(
                 testnet=True,
                 rate_limit_config=RateLimitConfig(
-                    requests_per_minute=10,
-                    weight_per_minute=100
-                )
+                    requests_per_minute=10, weight_per_minute=100
+                ),
             )
 
             mock_exchange = MagicMock()
-            mock_exchange.fetch_ticker = AsyncMock(return_value={
-                'last': 42000.0, 'high': 43000.0, 'low': 41000.0
-            })
+            mock_exchange.fetch_ticker = AsyncMock(
+                return_value={"last": 42000.0, "high": 43000.0, "low": 41000.0}
+            )
             connector.exchange = mock_exchange
 
             # Make multiple requests rapidly
@@ -333,7 +324,7 @@ class TestBinanceIntegration:
     @pytest.mark.asyncio
     async def test_different_market_types(self):
         """Test initialization with different market types."""
-        with patch('src.exchanges.binance.ccxt'):
+        with patch("src.exchanges.binance.ccxt"):
             spot = BinanceConnector(market=BinanceMarket.SPOT)
             assert spot.market == BinanceMarket.SPOT
 
@@ -343,13 +334,15 @@ class TestBinanceIntegration:
     @pytest.mark.asyncio
     async def test_timeframe_conversion(self):
         """Test timeframe handling for different intervals."""
-        with patch('src.exchanges.binance.ccxt'):
+        with patch("src.exchanges.binance.ccxt"):
             connector = BinanceConnector(testnet=True)
 
             mock_exchange = MagicMock()
-            mock_exchange.fetch_ohlcv = AsyncMock(return_value=[
-                [1609459200000, 29000.0, 29100.0, 28900.0, 29050.0, 100.0],
-            ])
+            mock_exchange.fetch_ohlcv = AsyncMock(
+                return_value=[
+                    [1609459200000, 29000.0, 29100.0, 28900.0, 29050.0, 100.0],
+                ]
+            )
             connector.exchange = mock_exchange
 
             # Test different timeframes

@@ -1,13 +1,14 @@
 """Backtesting engine for strategy validation."""
 
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 from loguru import logger
 
-from src.core.types import OHLCV, PatternResult, SignalType
-from src.backtest.strategy import BaseStrategy
 from src.backtest.metrics import BacktestMetrics
+from src.backtest.strategy import BaseStrategy
+from src.core.types import OHLCV, PatternResult
 
 
 class Trade:
@@ -39,7 +40,7 @@ class Trade:
         self.exit_price = exit_price
 
         # Calculate P&L
-        if self.direction == 'long':
+        if self.direction == "long":
             self.pnl_pct = (exit_price - self.entry_price) / self.entry_price
         else:  # short
             self.pnl_pct = (self.entry_price - exit_price) / self.entry_price
@@ -121,7 +122,8 @@ class BacktestEngine:
 
             # Get patterns for this candle
             candle_patterns = [
-                p for p in patterns
+                p
+                for p in patterns
                 if abs(p.timestamp.timestamp() - data.timestamps[i]) < 60
             ]
 
@@ -136,7 +138,11 @@ class BacktestEngine:
                 )
 
                 if should_close:
-                    exit_price = current_price * (1 + self.slippage if open_trade.direction == 'long' else 1 - self.slippage)
+                    exit_price = current_price * (
+                        1 + self.slippage
+                        if open_trade.direction == "long"
+                        else 1 - self.slippage
+                    )
                     open_trade.close(current_time, exit_price, self.fee_rate)
 
                     # Update capital
@@ -158,7 +164,9 @@ class BacktestEngine:
 
                 if should_enter:
                     position_size = self.capital * self.position_size_pct
-                    entry_price = current_price * (1 + self.slippage if direction == 'long' else 1 - self.slippage)
+                    entry_price = current_price * (
+                        1 + self.slippage if direction == "long" else 1 - self.slippage
+                    )
 
                     open_trade = Trade(
                         entry_time=current_time,
@@ -174,10 +182,18 @@ class BacktestEngine:
             current_equity = self.capital
             if open_trade:
                 # Mark-to-market
-                if open_trade.direction == 'long':
-                    unrealized_pnl = open_trade.position_size * (current_price - open_trade.entry_price) / open_trade.entry_price
+                if open_trade.direction == "long":
+                    unrealized_pnl = (
+                        open_trade.position_size
+                        * (current_price - open_trade.entry_price)
+                        / open_trade.entry_price
+                    )
                 else:
-                    unrealized_pnl = open_trade.position_size * (open_trade.entry_price - current_price) / open_trade.entry_price
+                    unrealized_pnl = (
+                        open_trade.position_size
+                        * (open_trade.entry_price - current_price)
+                        / open_trade.entry_price
+                    )
 
                 current_equity += unrealized_pnl
 
@@ -187,21 +203,25 @@ class BacktestEngine:
         # Close any remaining open trade
         if open_trade:
             final_price = data.close[-1]
-            open_trade.close(datetime.fromtimestamp(data.timestamps[-1]), final_price, self.fee_rate)
+            open_trade.close(
+                datetime.fromtimestamp(data.timestamps[-1]), final_price, self.fee_rate
+            )
             self.capital += open_trade.pnl
             self.trades.append(open_trade)
 
         # Calculate metrics
         metrics = BacktestMetrics.calculate(self)
 
-        logger.info(f"Backtest complete: {len(self.trades)} trades, "
-                   f"Final capital: ${self.capital:.2f}")
+        logger.info(
+            f"Backtest complete: {len(self.trades)} trades, "
+            f"Final capital: ${self.capital:.2f}"
+        )
 
         return {
-            'trades': self.trades,
-            'metrics': metrics,
-            'equity_curve': np.array(self.equity_curve),
-            'timestamps': self.timestamps,
-            'initial_capital': self.initial_capital,
-            'final_capital': self.capital,
+            "trades": self.trades,
+            "metrics": metrics,
+            "equity_curve": np.array(self.equity_curve),
+            "timestamps": self.timestamps,
+            "initial_capital": self.initial_capital,
+            "final_capital": self.capital,
         }

@@ -1,22 +1,24 @@
 """Tests for backtesting framework."""
 
-import pytest
-import numpy as np
 from datetime import datetime
 
-from src.core.types import OHLCV, PatternResult, PatternType, SignalType, Timeframe
+import numpy as np
+import pytest
+
 from src.backtest.engine import BacktestEngine, Trade
-from src.backtest.strategy import SimplePatternStrategy, TrendFollowingStrategy
 from src.backtest.metrics import BacktestMetrics
+from src.backtest.strategy import SimplePatternStrategy, TrendFollowingStrategy
+from src.core.types import (OHLCV, PatternResult, PatternType, SignalType,
+                            Timeframe)
 
 
-def create_test_data(length: int = 100, trend: str = 'uptrend') -> OHLCV:
+def create_test_data(length: int = 100, trend: str = "uptrend") -> OHLCV:
     """Create test OHLCV data."""
     timestamps = np.arange(length, dtype=float) * 3600
 
-    if trend == 'uptrend':
+    if trend == "uptrend":
         prices = np.linspace(100, 150, length)
-    elif trend == 'downtrend':
+    elif trend == "downtrend":
         prices = np.linspace(150, 100, length)
     else:
         prices = np.ones(length) * 100
@@ -55,12 +57,12 @@ class TestTrade:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
 
         assert trade.entry_price == 100.0
         assert trade.position_size == 1000.0
-        assert trade.direction == 'long'
+        assert trade.direction == "long"
         assert trade.is_open()
 
     def test_trade_close_long(self):
@@ -69,7 +71,7 @@ class TestTrade:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
 
         trade.close(datetime.now(), 110.0, fee_rate=0.001)
@@ -85,7 +87,7 @@ class TestTrade:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='short',
+            direction="short",
         )
 
         trade.close(datetime.now(), 90.0, fee_rate=0.001)
@@ -100,7 +102,7 @@ class TestTrade:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
 
         trade.close(datetime.now(), 95.0, fee_rate=0.001)
@@ -134,8 +136,8 @@ class TestBacktestEngine:
 
         results = await engine.run(strategy, data, patterns)
 
-        assert results['final_capital'] == 10000.0  # No trades
-        assert len(results['trades']) == 0
+        assert results["final_capital"] == 10000.0  # No trades
+        assert len(results["trades"]) == 0
 
     @pytest.mark.asyncio
     async def test_backtest_with_buy_signals(self):
@@ -144,7 +146,7 @@ class TestBacktestEngine:
         strategy = SimplePatternStrategy(min_confidence=0.75)
 
         # Create uptrend data
-        data = create_test_data(100, trend='uptrend')
+        data = create_test_data(100, trend="uptrend")
 
         # Create buy patterns at beginning
         patterns = [create_test_pattern(SignalType.BUY, confidence=0.80)]
@@ -153,7 +155,7 @@ class TestBacktestEngine:
         results = await engine.run(strategy, data, patterns)
 
         # Should have made at least one trade
-        assert len(results['trades']) > 0
+        assert len(results["trades"]) > 0
 
     @pytest.mark.asyncio
     async def test_backtest_respects_capital(self):
@@ -173,7 +175,7 @@ class TestBacktestEngine:
         results = await engine.run(strategy, data, [pattern])
 
         # Final capital should not exceed initial by absurd amounts
-        assert results['final_capital'] < 20000.0  # Reasonable bounds
+        assert results["final_capital"] < 20000.0  # Reasonable bounds
 
 
 class TestSimplePatternStrategy:
@@ -208,7 +210,7 @@ class TestSimplePatternStrategy:
         )
 
         assert should_enter
-        assert direction == 'long'
+        assert direction == "long"
 
     def test_strategy_should_enter_sell(self):
         """Test strategy enters on sell signal."""
@@ -226,7 +228,7 @@ class TestSimplePatternStrategy:
         )
 
         assert should_enter
-        assert direction == 'short'
+        assert direction == "short"
 
     def test_strategy_ignores_low_confidence(self):
         """Test strategy ignores low confidence patterns."""
@@ -253,7 +255,7 @@ class TestSimplePatternStrategy:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
 
         data = create_test_data(50)
@@ -268,7 +270,7 @@ class TestSimplePatternStrategy:
         )
 
         assert should_exit
-        assert reason == 'stop_loss'
+        assert reason == "stop_loss"
 
     def test_strategy_take_profit(self):
         """Test strategy exits on take profit."""
@@ -278,7 +280,7 @@ class TestSimplePatternStrategy:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
 
         data = create_test_data(50)
@@ -293,7 +295,7 @@ class TestSimplePatternStrategy:
         )
 
         assert should_exit
-        assert reason == 'take_profit'
+        assert reason == "take_profit"
 
 
 class TestTrendFollowingStrategy:
@@ -333,9 +335,9 @@ class TestBacktestMetrics:
         engine = BacktestEngine(initial_capital=10000.0)
         metrics = BacktestMetrics.calculate(engine)
 
-        assert metrics['total_return'] == 0.0
-        assert metrics['total_trades'] == 0
-        assert metrics['win_rate'] == 0.0
+        assert metrics["total_return"] == 0.0
+        assert metrics["total_trades"] == 0
+        assert metrics["win_rate"] == 0.0
 
     def test_metrics_with_trades(self):
         """Test metrics calculation with trades."""
@@ -346,7 +348,7 @@ class TestBacktestMetrics:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
         trade1.close(datetime.now(), 110.0, fee_rate=0.001)
         engine.trades.append(trade1)
@@ -356,7 +358,7 @@ class TestBacktestMetrics:
             entry_time=datetime.now(),
             entry_price=100.0,
             position_size=1000.0,
-            direction='long',
+            direction="long",
         )
         trade2.close(datetime.now(), 95.0, fee_rate=0.001)
         engine.trades.append(trade2)
@@ -365,10 +367,10 @@ class TestBacktestMetrics:
 
         metrics = BacktestMetrics.calculate(engine)
 
-        assert metrics['total_trades'] == 2
-        assert metrics['winning_trades'] == 1
-        assert metrics['losing_trades'] == 1
-        assert metrics['win_rate'] == 50.0
+        assert metrics["total_trades"] == 2
+        assert metrics["winning_trades"] == 1
+        assert metrics["losing_trades"] == 1
+        assert metrics["win_rate"] == 50.0
 
     def test_sharpe_ratio_calculation(self):
         """Test Sharpe ratio calculation."""

@@ -9,20 +9,18 @@ This example demonstrates:
 """
 
 import asyncio
-from datetime import datetime
 
+from src.alerts.handlers import ConsoleAlertHandler, FileAlertHandler
+from src.analysis.analyzer import MarketAnalyzer
 from src.core.engine import PatternRecognitionEngine
 from src.core.types import Exchange, Timeframe
 from src.data.provider import CryptoDataProvider
-from src.patterns.detector import TechnicalPatternDetector
-from src.patterns.technical import *
 from src.patterns.candlestick import CandlestickPatternDetector
 from src.patterns.chart import *
-from src.analysis.analyzer import MarketAnalyzer
-from src.alerts.handlers import ConsoleAlertHandler, FileAlertHandler
+from src.patterns.detector import TechnicalPatternDetector
+from src.patterns.technical import *
 from src.utils.config import get_default_config
 from src.utils.logger import setup_logger
-from src.utils.validation import DataValidator
 
 
 async def analyze_symbol(
@@ -73,27 +71,51 @@ async def analyze_symbol(
                 print(f"{'─'*70}")
 
                 # Group by type
-                technical = [p for p in result.patterns if p.pattern_type.value == 'technical_indicator']
-                candlestick = [p for p in result.patterns if p.pattern_type.value == 'candlestick_pattern']
-                chart = [p for p in result.patterns if p.pattern_type.value == 'chart_pattern']
+                technical = [
+                    p
+                    for p in result.patterns
+                    if p.pattern_type.value == "technical_indicator"
+                ]
+                candlestick = [
+                    p
+                    for p in result.patterns
+                    if p.pattern_type.value == "candlestick_pattern"
+                ]
+                chart = [
+                    p
+                    for p in result.patterns
+                    if p.pattern_type.value == "chart_pattern"
+                ]
 
                 if technical:
                     print(f"\nTechnical Indicators ({len(technical)}):")
-                    for p in sorted(technical, key=lambda x: x.confidence, reverse=True)[:5]:
+                    for p in sorted(
+                        technical, key=lambda x: x.confidence, reverse=True
+                    )[:5]:
                         print(f"  • {p.pattern_name}")
-                        print(f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}")
+                        print(
+                            f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}"
+                        )
 
                 if candlestick:
                     print(f"\nCandlestick Patterns ({len(candlestick)}):")
-                    for p in sorted(candlestick, key=lambda x: x.confidence, reverse=True)[:5]:
+                    for p in sorted(
+                        candlestick, key=lambda x: x.confidence, reverse=True
+                    )[:5]:
                         print(f"  • {p.pattern_name}")
-                        print(f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}")
+                        print(
+                            f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}"
+                        )
 
                 if chart:
                     print(f"\nChart Patterns ({len(chart)}):")
-                    for p in sorted(chart, key=lambda x: x.confidence, reverse=True)[:5]:
+                    for p in sorted(chart, key=lambda x: x.confidence, reverse=True)[
+                        :5
+                    ]:
                         print(f"  • {p.pattern_name}")
-                        print(f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}")
+                        print(
+                            f"    Signal: {p.signal.value.upper()}, Confidence: {p.confidence:.2%}"
+                        )
                         if p.target_price:
                             print(f"    Target: ${p.target_price:,.2f}")
 
@@ -118,9 +140,9 @@ async def main():
     config = get_default_config()
     setup_logger(config)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("MULTI-PATTERN CRYPTOCURRENCY ANALYSIS")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Initialize engine
     engine = PatternRecognitionEngine(config)
@@ -171,8 +193,8 @@ async def main():
     console_handler = ConsoleAlertHandler()
     file_handler = FileAlertHandler()
 
-    await console_handler.configure({'enabled': True})
-    await file_handler.configure({'enabled': True, 'path': 'logs/alerts.log'})
+    await console_handler.configure({"enabled": True})
+    await file_handler.configure({"enabled": True, "path": "logs/alerts.log"})
 
     engine.add_alert_handler(console_handler)
     engine.add_alert_handler(file_handler)

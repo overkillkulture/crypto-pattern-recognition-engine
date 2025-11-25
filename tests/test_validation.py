@@ -1,10 +1,11 @@
 """Tests for data validation."""
 
-import pytest
-import numpy as np
 from datetime import datetime
 
-from src.core.types import OHLCV, Exchange, Timeframe, MarketData
+import numpy as np
+import pytest
+
+from src.core.types import OHLCV, Exchange, MarketData, Timeframe
 from src.utils.validation import DataValidator, ValidationError
 
 
@@ -138,16 +139,16 @@ class TestDataValidator:
     def test_validate_config_valid(self):
         """Test validation of valid config."""
         config = {
-            'exchanges': {'binance': {'enabled': True}},
-            'pairs': ['BTC/USDT'],
-            'timeframes': ['1h', '4h'],
+            "exchanges": {"binance": {"enabled": True}},
+            "pairs": ["BTC/USDT"],
+            "timeframes": ["1h", "4h"],
         }
 
         assert DataValidator.validate_config(config)
 
     def test_validate_config_missing_keys(self):
         """Test validation fails with missing keys."""
-        config = {'exchanges': {}}  # Missing 'pairs' and 'timeframes'
+        config = {"exchanges": {}}  # Missing 'pairs' and 'timeframes'
 
         with pytest.raises(ValidationError, match="Missing required config key"):
             DataValidator.validate_config(config)
@@ -155,9 +156,9 @@ class TestDataValidator:
     def test_validate_config_empty_exchanges(self):
         """Test validation fails with no exchanges."""
         config = {
-            'exchanges': {},  # No exchanges
-            'pairs': ['BTC/USDT'],
-            'timeframes': ['1h'],
+            "exchanges": {},  # No exchanges
+            "pairs": ["BTC/USDT"],
+            "timeframes": ["1h"],
         }
 
         with pytest.raises(ValidationError, match="No exchanges configured"):
@@ -166,9 +167,9 @@ class TestDataValidator:
     def test_validate_config_invalid_symbol(self):
         """Test validation fails with invalid symbols."""
         config = {
-            'exchanges': {'binance': {'enabled': True}},
-            'pairs': ['BTCUSDT'],  # Invalid format
-            'timeframes': ['1h'],
+            "exchanges": {"binance": {"enabled": True}},
+            "pairs": ["BTCUSDT"],  # Invalid format
+            "timeframes": ["1h"],
         }
 
         with pytest.raises(ValidationError):
@@ -177,9 +178,9 @@ class TestDataValidator:
     def test_validate_config_invalid_timeframe(self):
         """Test validation fails with invalid timeframe."""
         config = {
-            'exchanges': {'binance': {'enabled': True}},
-            'pairs': ['BTC/USDT'],
-            'timeframes': ['invalid_tf'],
+            "exchanges": {"binance": {"enabled": True}},
+            "pairs": ["BTC/USDT"],
+            "timeframes": ["invalid_tf"],
         }
 
         with pytest.raises(ValidationError, match="Invalid timeframe"):

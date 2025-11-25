@@ -1,14 +1,15 @@
 """Database session management and connection handling."""
 
-from contextlib import asynccontextmanager, contextmanager
-from typing import Optional, AsyncGenerator, Generator
 import logging
+from contextlib import asynccontextmanager, contextmanager
+from typing import AsyncGenerator, Generator, Optional
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker, Session, scoped_session
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.pool import QueuePool
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from src.db.models import Base
 
@@ -51,7 +52,9 @@ class DatabaseSession:
         if use_async:
             # Convert to async URL if needed
             if database_url.startswith("postgresql://"):
-                database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+                database_url = database_url.replace(
+                    "postgresql://", "postgresql+asyncpg://"
+                )
             elif database_url.startswith("sqlite://"):
                 database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://")
 
@@ -92,6 +95,7 @@ class DatabaseSession:
     @staticmethod
     def _enable_sqlite_foreign_keys(engine: Engine):
         """Enable foreign key constraints for SQLite."""
+
         @event.listens_for(engine, "connect")
         def set_sqlite_pragma(dbapi_conn, connection_record):
             cursor = dbapi_conn.cursor()

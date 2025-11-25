@@ -1,17 +1,18 @@
 """Trading simulator for paper trading and strategy testing."""
 
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
-import logging
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class OrderType(str, Enum):
     """Order types."""
+
     MARKET = "market"
     LIMIT = "limit"
     STOP_LOSS = "stop_loss"
@@ -20,12 +21,14 @@ class OrderType(str, Enum):
 
 class OrderSide(str, Enum):
     """Order side (buy/sell)."""
+
     BUY = "buy"
     SELL = "sell"
 
 
 class OrderStatus(str, Enum):
     """Order status."""
+
     PENDING = "pending"
     FILLED = "filled"
     PARTIALLY_FILLED = "partially_filled"
@@ -87,11 +90,19 @@ class Position:
         self.current_price = current_price
 
         if self.side == OrderSide.BUY:  # Long position
-            self.unrealized_pnl = (current_price - self.entry_price) * self.quantity - self.fees_paid
-            self.unrealized_pnl_pct = (current_price - self.entry_price) / self.entry_price * 100
+            self.unrealized_pnl = (
+                current_price - self.entry_price
+            ) * self.quantity - self.fees_paid
+            self.unrealized_pnl_pct = (
+                (current_price - self.entry_price) / self.entry_price * 100
+            )
         else:  # Short position
-            self.unrealized_pnl = (self.entry_price - current_price) * self.quantity - self.fees_paid
-            self.unrealized_pnl_pct = (self.entry_price - current_price) / self.entry_price * 100
+            self.unrealized_pnl = (
+                self.entry_price - current_price
+            ) * self.quantity - self.fees_paid
+            self.unrealized_pnl_pct = (
+                (self.entry_price - current_price) / self.entry_price * 100
+            )
 
 
 class TradingSimulator:
@@ -200,7 +211,9 @@ class TradingSimulator:
             available = self.get_buying_power()
 
             if required_capital > available:
-                logger.warning(f"Insufficient capital: need ${required_capital:.2f}, have ${available:.2f}")
+                logger.warning(
+                    f"Insufficient capital: need ${required_capital:.2f}, have ${available:.2f}"
+                )
                 return None
 
         # Check if we have position to sell
@@ -209,7 +222,9 @@ class TradingSimulator:
                 logger.warning(f"No position in {symbol} to sell")
                 return None
             if self.positions[symbol].quantity < quantity:
-                logger.warning(f"Insufficient quantity: have {self.positions[symbol].quantity}, need {quantity}")
+                logger.warning(
+                    f"Insufficient quantity: have {self.positions[symbol].quantity}, need {quantity}"
+                )
                 return None
 
         # Create and fill order
@@ -237,7 +252,9 @@ class TradingSimulator:
         self.total_trades += 1
         self.total_fees_paid += fees
 
-        logger.info(f"{side.value.upper()} {quantity} {symbol} @ ${execution_price:.2f} (fees: ${fees:.2f})")
+        logger.info(
+            f"{side.value.upper()} {quantity} {symbol} @ ${execution_price:.2f} (fees: ${fees:.2f})"
+        )
 
         return order
 
@@ -271,7 +288,9 @@ class TradingSimulator:
         )
 
         self.open_orders[order.order_id] = order
-        logger.info(f"Limit order placed: {side.value.upper()} {quantity} {symbol} @ ${limit_price:.2f}")
+        logger.info(
+            f"Limit order placed: {side.value.upper()} {quantity} {symbol} @ ${limit_price:.2f}"
+        )
 
         return order
 
@@ -348,7 +367,9 @@ class TradingSimulator:
                 self.total_trades += 1
                 self.total_fees_paid += fees
 
-                logger.info(f"Limit order filled: {order.side.value.upper()} {order.quantity} {order.symbol} @ ${execution_price:.2f}")
+                logger.info(
+                    f"Limit order filled: {order.side.value.upper()} {order.quantity} {order.symbol} @ ${execution_price:.2f}"
+                )
 
         # Remove filled orders
         for order_id in filled_orders:
@@ -375,8 +396,8 @@ class TradingSimulator:
             existing = self.positions[symbol]
             total_quantity = existing.quantity + order.filled_quantity
             avg_entry_price = (
-                (existing.entry_price * existing.quantity) +
-                (order.filled_price * order.filled_quantity)
+                (existing.entry_price * existing.quantity)
+                + (order.filled_price * order.filled_quantity)
             ) / total_quantity
 
             existing.quantity = total_quantity
@@ -413,9 +434,13 @@ class TradingSimulator:
 
         # Calculate realized P&L
         if position.side == OrderSide.BUY:  # Closing long
-            realized_pnl = (order.filled_price - position.entry_price) * order.filled_quantity
+            realized_pnl = (
+                order.filled_price - position.entry_price
+            ) * order.filled_quantity
         else:  # Closing short
-            realized_pnl = (position.entry_price - order.filled_price) * order.filled_quantity
+            realized_pnl = (
+                position.entry_price - order.filled_price
+            ) * order.filled_quantity
 
         realized_pnl -= order.fees
 
@@ -440,7 +465,9 @@ class TradingSimulator:
             # Partial close
             position.quantity -= order.filled_quantity
             position.update_price(order.filled_price)
-            logger.info(f"Position reduced: {symbol}, realized P&L: ${realized_pnl:.2f}")
+            logger.info(
+                f"Position reduced: {symbol}, realized P&L: ${realized_pnl:.2f}"
+            )
 
     def close_all_positions(self, current_prices: Dict[str, float]):
         """
@@ -452,7 +479,9 @@ class TradingSimulator:
         for symbol in list(self.positions.keys()):
             if symbol in current_prices:
                 position = self.positions[symbol]
-                self.market_order(symbol, OrderSide.SELL, position.quantity, current_prices[symbol])
+                self.market_order(
+                    symbol, OrderSide.SELL, position.quantity, current_prices[symbol]
+                )
 
     def get_statistics(self) -> Dict[str, any]:
         """Get trading statistics."""
@@ -464,19 +493,19 @@ class TradingSimulator:
             win_rate = (self.winning_trades / self.total_trades) * 100
 
         return {
-            'initial_capital': self.initial_capital,
-            'current_cash': self.cash,
-            'equity': equity,
-            'unrealized_pnl': equity - self.cash,
-            'realized_pnl': self.total_realized_pnl,
-            'total_return_pct': return_pct,
-            'total_trades': self.total_trades,
-            'winning_trades': self.winning_trades,
-            'losing_trades': self.losing_trades,
-            'win_rate': win_rate,
-            'total_fees': self.total_fees_paid,
-            'open_positions': len(self.positions),
-            'open_orders': len(self.open_orders),
+            "initial_capital": self.initial_capital,
+            "current_cash": self.cash,
+            "equity": equity,
+            "unrealized_pnl": equity - self.cash,
+            "realized_pnl": self.total_realized_pnl,
+            "total_return_pct": return_pct,
+            "total_trades": self.total_trades,
+            "winning_trades": self.winning_trades,
+            "losing_trades": self.losing_trades,
+            "win_rate": win_rate,
+            "total_fees": self.total_fees_paid,
+            "open_positions": len(self.positions),
+            "open_orders": len(self.open_orders),
         }
 
     def reset(self):
