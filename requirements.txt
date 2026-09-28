@@ -6,7 +6,7 @@ scipy>=1.10.0
 # Data & Exchange APIs
 ccxt>=4.0.0
 websocket-client>=1.6.0
-aiohttp>=3.9.0
+aiohttp>=3.14.3
 
 # Technical Analysis
 ta-lib>=0.4.28
