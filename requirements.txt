@@ -9,7 +9,7 @@ websocket-client>=1.6.0
 aiohttp>=3.9.0
 
 # Technical Analysis
-ta-lib>=0.4.28
+ta-lib>=0.8.1
 pandas-ta>=0.3.14b
 
 # Machine Learning
