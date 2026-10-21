@@ -147,7 +147,7 @@ jobs:
 
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
