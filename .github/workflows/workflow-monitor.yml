@@ -24,7 +24,7 @@ jobs:
 
     - name: Check workflow status
       id: check_status
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const workflows = await github.rest.actions.listRepoWorkflows({
@@ -61,7 +61,7 @@ jobs:
 
     - name: Create issue for failed workflows
       if: steps.check_status.outputs.failed_count > 0
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const failedWorkflows = JSON.parse('${{ steps.check_status.outputs.failed_workflows }}');
@@ -108,7 +108,7 @@ jobs:
 
     - name: Close issue if all workflows passing
       if: steps.check_status.outputs.failed_count == 0
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const issues = await github.rest.issues.listForRepo({
@@ -129,7 +129,7 @@ jobs:
           }
 
     - name: Generate health report
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const fs = require('fs');
